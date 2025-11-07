@@ -1,0 +1,59 @@
+{
+  "name": "Capstone Backend",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": false,
+      "username": "node",
+      "userUid": "1000",
+      "userGid": "1000"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker",
+        "Prisma.prisma",
+        "firsttris.vscode-jest-runner"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+      }
+    }
+  },
+  "runArgs": ["--network=infra_default"],
+  "forwardPorts": [3000, 9229],
+  "remoteEnv": {
+    "NODE_ENV": "development",
+    "PORT": "3000",
+    "DATABASE_URL": "postgres://postgres:postgres@postgres:5432/smart_service",
+    // "S3_ENDPOINT": "http://minio:9000",
+    // "S3_ACCESS_KEY": "minio",
+    // "S3_SECRET_KEY": "minio123",
+    // "S3_BUCKET": "my-bucket",
+    // "SENDGRID_API_KEY": "dev-key-placeholder",
+    "DB_USERNAME": "postgres",
+    "DB_PASSWORD": "postgres"
+  },
+  "initializeCommand": "",
+  "postCreateCommand": "bash -lc 'cd backend && npm ci || npm install'",
+  "postStartCommand": "bash -lc 'echo Dev container started'",
+  "mounts": [],
+  "containerUser": "node",
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "4gb"
+  },
+  "portsAttributes": {
+    "3000": {
+      "label": "NestJS API"
+    }
+  }
+}

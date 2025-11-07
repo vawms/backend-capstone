@@ -1,0 +1,7 @@
+node_modules
+dist
+.env
+*.log
+/infra/pgdata
+/infra/minio_data
+/backend/.env
