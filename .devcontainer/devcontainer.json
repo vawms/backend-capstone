@@ -28,7 +28,7 @@
       }
     }
   },
-  "runArgs": ["--network=infra_default"],
+  "runArgs": ["--network=infra_default", "-p", "3000:3000"],
   "forwardPorts": [3000, 9229],
   "remoteEnv": {
     "NODE_ENV": "development",

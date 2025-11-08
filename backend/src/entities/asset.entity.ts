@@ -54,6 +54,9 @@ export class Asset {
   @JoinColumn({ name: 'company_id' }) // ADD THIS LINE
   company!: Company;
 
+  @JoinColumn({ name: 'company_name' })
+  company1!: Company;
+
   @OneToMany(() => ServiceRequest, (sr) => sr.asset)
   service_requests!: ServiceRequest[];
 }
