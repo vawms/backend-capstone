@@ -1,6 +1,7 @@
 export class AssetResponseDto {
   id!: string;
   company_id!: string;
+  company_name!: string;
   name!: string;
   model!: string;
   serial_number!: string;

@@ -4,6 +4,7 @@ export class PublicAssetDto {
   id: string;
   name: string;
   model: string;
+  company_name?: string;
   location: {
     city: string;
     lat: number;
@@ -14,6 +15,7 @@ export class PublicAssetDto {
     this.id = asset.id;
     this.name = asset.name;
     this.model = asset.model;
+    this.company_name = asset.company?.name;
     this.location = {
       city: this.extractCity(asset.location_address),
       lat: asset.location_lat,

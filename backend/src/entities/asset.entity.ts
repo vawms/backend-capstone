@@ -14,8 +14,8 @@ import { Company } from './company.entity';
 import { ServiceRequest } from './service-request.entity';
 
 @Entity('assets')
-@Index('idx_assets_qr_token', ['qr_token']) // Index on qr_token
-@Index('idx_assets_company_id', ['company_id']) // Index on company_id
+@Index('idx_assets_qr_token', ['qr_token'])
+@Index('idx_assets_company_id', ['company_id'])
 export class Asset {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -51,7 +51,7 @@ export class Asset {
   @ManyToOne(() => Company, (company) => company.assets, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'company_id' }) // ADD THIS LINE
+  @JoinColumn({ name: 'company_id' })
   company!: Company;
 
   @OneToMany(() => ServiceRequest, (sr) => sr.asset)

@@ -63,7 +63,10 @@ export class AssetService {
    * Fetch asset by ID
    */
   async getAssetById(id: string): Promise<AssetResponseDto> {
-    const asset = await this.assetRepository.findOne({ where: { id } });
+    const asset = await this.assetRepository.findOne({
+      where: { id },
+      relations: ['company'],
+    });
 
     if (!asset) {
       throw new NotFoundException(`Asset with ID ${id} not found`);
@@ -84,6 +87,7 @@ export class AssetService {
 
     const asset = await this.assetRepository.findOne({
       where: { qr_token },
+      relations: ['company'],
     });
 
     if (!asset) {
@@ -138,6 +142,7 @@ export class AssetService {
     return {
       id: asset.id,
       company_id: asset.company_id,
+      company_name: asset.company?.name ?? '',
       name: asset.name,
       model: asset.model,
       serial_number: asset.serial_number,
