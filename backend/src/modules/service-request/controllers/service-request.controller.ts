@@ -1,6 +1,8 @@
 import {
   Controller,
   Get,
+  Patch,
+  Body,
   Param,
   Query,
   HttpCode,
@@ -8,6 +10,7 @@ import {
   ValidationPipe,
   ParseUUIDPipe,
 } from '@nestjs/common';
+import { ServiceRequestStatus } from '../../../entities/service-request.entity';
 import { ServiceRequestService } from '../services/service-request.service';
 import { ListServiceRequestsQuery } from '../dto/list-service-requests.query';
 import { ListServiceRequestsResponseDto } from '../dto/list-service-requests-response.dto';
@@ -15,6 +18,33 @@ import { ListServiceRequestsResponseDto } from '../dto/list-service-requests-res
 @Controller('v1/service-requests')
 export class ServiceRequestController {
   constructor(private readonly serviceRequestService: ServiceRequestService) {}
+
+  @Patch(':id/status')
+  @HttpCode(HttpStatus.OK)
+  async updateStatus(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body('status') status: ServiceRequestStatus,
+  ) {
+    return this.serviceRequestService.updateStatus(id, status);
+  }
+
+  @Patch(':id/assign')
+  @HttpCode(HttpStatus.OK)
+  async assignTechnician(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body('technician_id', new ParseUUIDPipe()) technicianId: string,
+  ) {
+    return this.serviceRequestService.assignTechnician(id, technicianId);
+  }
+
+  @Patch(':id/technician-notes')
+  @HttpCode(HttpStatus.OK)
+  async updateTechnicianNotes(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body('notes') notes: string,
+  ) {
+    return this.serviceRequestService.updateTechnicianNotes(id, notes);
+  }
 
   /**
    * GET /v1/service-requests

@@ -11,6 +11,7 @@ import {
 import { Company } from './company.entity';
 import { Asset } from './asset.entity';
 import { Client } from './client.entity';
+import { Technician } from './technician.entity';
 
 export enum ServiceRequestChannel {
   QR = 'QR',
@@ -58,6 +59,9 @@ export class ServiceRequest {
   @Column('text')
   description!: string;
 
+  @Column('text', { nullable: true })
+  technician_notes!: string;
+
   @Column('jsonb', { nullable: true })
   media!: Array<{ url: string; kind: 'image' | 'video' | 'document' }>;
 
@@ -77,17 +81,29 @@ export class ServiceRequest {
   @ManyToOne(() => Company, (company) => company.service_requests, {
     onDelete: 'CASCADE',
   })
+  @JoinColumn({ name: 'company_id' })
   company!: Company;
 
   @ManyToOne(() => Asset, (asset) => asset.service_requests, {
     onDelete: 'CASCADE',
   })
+  @JoinColumn({ name: 'asset_id' })
   asset!: Asset;
 
   @ManyToOne(() => Client, (client) => client.service_requests, {
     onDelete: 'SET NULL',
     nullable: true,
   })
-  @JoinColumn({ name: 'client_id' }) // ADD THIS LINE
+  @JoinColumn({ name: 'client_id' })
   client!: Client;
+
+  @Column('uuid', { nullable: true })
+  technician_id!: string;
+
+  @ManyToOne(() => Technician, (technician) => technician.service_requests, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
+  @JoinColumn({ name: 'technician_id' })
+  technician!: Technician;
 }

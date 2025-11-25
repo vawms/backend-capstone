@@ -4,7 +4,7 @@ import { Asset } from './entities/asset.entity';
 import { Client } from './entities/client.entity';
 import { Company } from './entities/company.entity';
 import { ServiceRequest } from './entities/service-request.entity';
-
+import { Technician } from './entities/technician.entity';
 // Load environment variables
 config();
 
@@ -17,7 +17,7 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_DATABASE || 'smart_service',
   synchronize: false, // Always false in production
   logging: true,
-  entities: [Asset, Client, Company, ServiceRequest],
+  entities: [Asset, Client, Company, ServiceRequest, Technician],
   migrations: ['src/migrations/**/*.ts'],
   subscribers: [],
   migrationsTableName: 'migrations',

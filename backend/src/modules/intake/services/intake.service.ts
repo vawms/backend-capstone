@@ -18,6 +18,8 @@ import { AssetService } from '../../assets/services/asset.service';
 import { ClientService } from '../../clients/services/client.service';
 import { RateLimiter } from '../../../common/utils/rate-limiter';
 
+import { SseService } from '../../realtime/sse.service';
+
 @Injectable()
 export class IntakeService {
   constructor(
@@ -26,7 +28,8 @@ export class IntakeService {
     private readonly assetService: AssetService,
     private readonly clientService: ClientService,
     private readonly rateLimiter: RateLimiter,
-  ) {}
+    private readonly sseService: SseService,
+  ) { }
 
   /**
    * Create service request from QR intake form
@@ -79,6 +82,17 @@ export class IntakeService {
     });
 
     const saved = await this.serviceRequestRepository.save(serviceRequest);
+
+    this.sseService.emit(saved.company_id, {
+      event: 'service_request.created',
+      data: {
+        id: saved.id,
+        createdAt: saved.created_at,
+        status: saved.status,
+        type: saved.type,
+        description: saved.description,
+      },
+    });
 
     return new IntakeResponseDto(saved.id, saved.created_at);
   }

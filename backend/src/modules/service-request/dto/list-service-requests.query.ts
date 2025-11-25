@@ -60,4 +60,11 @@ export class ListServiceRequestsQuery {
   @Min(1)
   @Max(100)
   limit: number = 20;
+
+  /**
+   * Filter by technician ID
+   */
+  @IsOptional()
+  @IsString()
+  technicianId?: string;
 }

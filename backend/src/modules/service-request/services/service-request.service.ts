@@ -3,8 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
   ServiceRequest,
-  // ServiceRequestStatus,
+  ServiceRequestStatus,
 } from '../../../entities/service-request.entity';
+import { EventsGateway } from '../../../events/events.gateway';
+import { SseService } from '../../realtime/sse.service';
+import { TechnicianService } from '../../technicians/services/technician.service';
 import { ListServiceRequestsQuery } from '../dto/list-service-requests.query';
 import { ListServiceRequestsResponseDto } from '../dto/list-service-requests-response.dto';
 import {
@@ -19,7 +22,104 @@ export class ServiceRequestService {
   constructor(
     @InjectRepository(ServiceRequest)
     private readonly serviceRequestRepository: Repository<ServiceRequest>,
+    private readonly eventsGateway: EventsGateway,
+    private readonly sseService: SseService,
+    private readonly technicianService: TechnicianService,
   ) {}
+
+  async updateStatus(
+    id: string,
+    status: ServiceRequestStatus,
+  ): Promise<ServiceRequest> {
+    const sr = await this.getServiceRequestById(id);
+    sr.status = status;
+    const updatedSr = await this.serviceRequestRepository.save(sr);
+
+    this.eventsGateway.emitServiceRequestUpdate(sr.company_id, {
+      type: 'STATUS_UPDATED',
+      serviceRequestId: sr.id,
+      status: sr.status,
+      updatedAt: sr.updated_at,
+    });
+
+    this.sseService.emit(sr.company_id, {
+      event: 'service_request.updated',
+      data: {
+        id: sr.id,
+        status: sr.status,
+        updatedAt: sr.updated_at,
+      },
+    });
+
+    return updatedSr;
+  }
+
+  async assignTechnician(
+    id: string,
+    technicianId: string,
+  ): Promise<ServiceRequest> {
+    const sr = await this.getServiceRequestById(id);
+    const technician = await this.technicianService.findOne(technicianId);
+
+    if (!technician) {
+      throw new NotFoundException(
+        `Technician with ID ${technicianId} not found`,
+      );
+    }
+
+    sr.technician = technician;
+    sr.status = ServiceRequestStatus.ASSIGNED; // Auto-update status to ASSIGNED
+    const updatedSr = await this.serviceRequestRepository.save(sr);
+
+    this.eventsGateway.emitServiceRequestUpdate(sr.company_id, {
+      type: 'TECHNICIAN_ASSIGNED',
+      serviceRequestId: sr.id,
+      technicianId: technician.id,
+      technicianName: technician.name,
+      status: sr.status,
+      updatedAt: sr.updated_at,
+    });
+
+    this.sseService.emit(sr.company_id, {
+      event: 'service_request.updated',
+      data: {
+        id: sr.id,
+        technicianId: technician.id,
+        status: sr.status,
+        updatedAt: sr.updated_at,
+      },
+    });
+
+    return updatedSr;
+  }
+
+  async updateTechnicianNotes(
+    id: string,
+    notes: string,
+  ): Promise<ServiceRequest> {
+    const sr = await this.getServiceRequestById(id);
+
+    sr.technician_notes = notes;
+    const updatedSr = await this.serviceRequestRepository.save(sr);
+
+    this.eventsGateway.emitServiceRequestUpdate(sr.company_id, {
+      type: 'TECHNICIAN_NOTES_UPDATED',
+      serviceRequestId: sr.id,
+      notes: notes,
+      updatedAt: sr.updated_at,
+    });
+
+    this.sseService.emit(sr.company_id, {
+      event: 'service_request.updated',
+      data: {
+        id: sr.id,
+        notes: notes,
+        updatedAt: sr.updated_at,
+      },
+    });
+
+    return updatedSr;
+  }
 
   /**
    * List service requests with filtering and cursor pagination
@@ -36,7 +136,10 @@ export class ServiceRequestService {
   async listServiceRequests(
     query: ListServiceRequestsQuery,
   ): Promise<ListServiceRequestsResponseDto> {
-    const { status, from, to, cursor, limit } = query;
+    const { status, from, to, cursor, limit, technicianId } = query;
+
+    // FIX: Ensure limit is a number and set a default if missing
+    const takeLimit = limit ? Number(limit) : 20;
 
     // Decode cursor if provided
     let cursorData: CursorData | null = null;
@@ -52,8 +155,8 @@ export class ServiceRequestService {
       .createQueryBuilder('sr')
       .leftJoinAndSelect('sr.asset', 'asset')
       .leftJoinAndSelect('sr.client', 'client')
-      .orderBy('sr.createdAt', 'DESC')
-      .addOrderBy('sr.id', 'DESC'); // Tiebreaker for consistent ordering
+      .orderBy('sr.created_at', 'DESC')
+      .addOrderBy('sr.id', 'DESC'); 
 
     // Filter by status
     if (status) {
@@ -67,22 +170,24 @@ export class ServiceRequestService {
     // Filter by date range
     if (from) {
       const fromDate = new Date(from);
-      qb = qb.andWhere('sr.createdAt >= :from', { from: fromDate });
+      qb = qb.andWhere('sr.created_at >= :from', { from: fromDate });
     }
 
     if (to) {
       const toDate = new Date(to);
-      // Add 1 day to include entire "to" date
       toDate.setDate(toDate.getDate() + 1);
-      qb = qb.andWhere('sr.createdAt < :to', { to: toDate });
+      qb = qb.andWhere('sr.created_at < :to', { to: toDate });
+    }
+
+    // Filter by technician
+    if (technicianId) {
+      qb = qb.andWhere('sr.technician_id = :technicianId', { technicianId });
     }
 
     // Apply cursor pagination
     if (cursorData) {
-      // Cursor pagination: get items BEFORE the cursor
-      // Since we're sorting DESC (newest first), we want items with older timestamps
       qb = qb.andWhere(
-        '(sr.createdAt < :cursorCreatedAt OR (sr.createdAt = :cursorCreatedAt AND sr.id < :cursorId))',
+        '(sr.created_at < :cursorCreatedAt OR (sr.created_at = :cursorCreatedAt AND sr.id < :cursorId))',
         {
           cursorCreatedAt: cursorData.createdAt,
           cursorId: cursorData.id,
@@ -90,17 +195,18 @@ export class ServiceRequestService {
       );
     }
 
+    // FIX: Use the parsed takeLimit variable here
     // Fetch limit + 1 (to determine if there are more items)
-    const items = await qb.take(limit + 1).getMany();
+    const items = await qb.take(takeLimit + 1).getMany();
 
     // Check if there are more items
-    const hasMore = items.length > limit;
-    const itemsToReturn = hasMore ? items.slice(0, limit) : items;
+    const hasMore = items.length > takeLimit;
+    const itemsToReturn = hasMore ? items.slice(0, takeLimit) : items;
 
     // Build response DTOs
     const dtos = itemsToReturn.map((sr) => this.mapToCardDto(sr));
 
-    // Calculate next cursor (from last item in response)
+    // Calculate next cursor
     let nextCursor: string | null = null;
     if (hasMore && dtos.length > 0) {
       const lastItem = itemsToReturn[itemsToReturn.length - 1];

@@ -311,3 +311,156 @@ curl http://localhost:3000/v1/service-requests/<serviceRequestId>
   }
 }
 ```
+
+## Technicians
+
+### Create Technician
+
+```bash
+curl -X POST http://localhost:3000/technicians \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_id": "Company ID (UUID)",
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone": "+1-555-0123",
+  }'
+```
+
+#### Response
+
+```json
+{
+  "id": "Technician ID (UUID)",
+  "company_id": "Company ID (UUID)",
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "phone": "+1-555-0123",
+  "created_at": "Date (ISO 8601)",
+  "updated_at": "Date (ISO 8601)"
+}
+```
+
+### List All Technicians
+
+```bash
+curl http://localhost:3000/technicians
+```
+
+#### Response
+
+```json
+[
+  {
+    "id": "Technician ID (UUID)",
+    "company_id": "Company ID (UUID)",
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone": "+1-555-0123",
+    "created_at": "Date (ISO 8601)",
+    "updated_at": "Date (ISO 8601)"
+  }
+]
+```
+
+### Get Technicians by Company
+
+```bash
+curl http://localhost:3000/technicians/company/<company_id>
+```
+
+#### Response
+
+```json
+[
+  {
+    "id": "Technician ID (UUID)",
+    "company_id": "Company ID (UUID)",
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone": "+1-555-0123",
+    "skills": ["HVAC", "Electrical"],
+    "created_at": "Date (ISO 8601)",
+    "updated_at": "Date (ISO 8601)"
+  }
+]
+```
+
+## Service Request Management
+
+### Update Service Request Status
+
+```bash
+curl -X PATCH http://localhost:3000/v1/service-requests/<serviceRequestId>/status \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "ASSIGNED"
+  }'
+```
+
+**Valid statuses**: `PENDING`, `ASSIGNED`, `SCHEDULED`, `IN_PROGRESS`, `RESOLVED`, `CLOSED`
+
+#### Response
+
+```json
+{
+  "id": "Service Request ID (UUID)",
+  "status": "ASSIGNED",
+  "updated_at": "Date (ISO 8601)"
+}
+```
+
+### Assign Technician to Service Request
+
+```bash
+curl -X PATCH http://localhost:3000/v1/service-requests/<serviceRequestId>/assign \
+  -H "Content-Type: application/json" \
+  -d '{
+    "technician_id": "Technician ID (UUID)"
+  }'
+```
+
+#### Response
+
+```json
+{
+  "id": "Service Request ID (UUID)",
+  "technician_id": "Technician ID (UUID)",
+  "status": "ASSIGNED",
+  "updated_at": "Date (ISO 8601)"
+}
+```
+
+### Add/Update Technician Notes
+
+```bash
+curl -X PATCH http://localhost:3000/v1/service-requests/<serviceRequestId>/technician-notes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "notes": "Contacted customer. Will visit tomorrow at 10AM."
+  }'
+```
+
+#### Response
+
+```json
+{
+  "id": "Service Request ID (UUID)",
+  "technician_notes": "Contacted customer. Will visit tomorrow at 10AM.",
+  "updated_at": "Date (ISO 8601)"
+}
+```
+
+### Filter Service Requests by Technician
+
+```bash
+# Get all service requests assigned to a specific technician
+curl "http://localhost:3000/v1/service-requests?technicianId=<technician_id>"
+
+# Combine with status filter
+curl "http://localhost:3000/v1/service-requests?technicianId=<technician_id>&status=IN_PROGRESS"
+```
+
+#### Response
+
+Same format as [List Service Requests](#list-service-requests-with-filters--cursor-pagination)

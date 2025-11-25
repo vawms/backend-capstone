@@ -8,6 +8,9 @@ import { IntakeModule } from './modules/intake/intake.module';
 import { ClientModule } from './modules/clients/client.module';
 import { ServiceRequestModule } from './modules/service-request/service-request.module';
 import { CompanyModule } from './modules/companies/company.module';
+import { TechnicianModule } from './modules/technicians/technician.module';
+import { EventsModule } from './events/events.module';
+import { RealtimeModule } from './modules/realtime/realtime.module';
 
 @Module({
   imports: [
@@ -28,6 +31,9 @@ import { CompanyModule } from './modules/companies/company.module';
     IntakeModule,
     ServiceRequestModule,
     CompanyModule,
+    TechnicianModule,
+    EventsModule,
+    RealtimeModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }

@@ -9,6 +9,7 @@ import {
 import { Asset } from './asset.entity';
 import { Client } from './client.entity';
 import { ServiceRequest } from './service-request.entity';
+import { Technician } from './technician.entity';
 
 @Entity('companies')
 export class Company {
@@ -39,4 +40,7 @@ export class Company {
 
   @OneToMany(() => ServiceRequest, (sr) => sr.company)
   service_requests!: ServiceRequest[];
+
+  @OneToMany(() => Technician, (technician) => technician.company)
+  technicians!: Technician[];
 }
