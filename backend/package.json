@@ -21,7 +21,8 @@
     "migration:generate": "typeorm-ts-node-commonjs migration:generate src/migrations/Schema -d src/ormconfig.ts",
     "migration:run": "typeorm-ts-node-commonjs migration:run -d src/ormconfig.ts",
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/ormconfig.ts",
-    "seed": "ts-node src/seeds/seed.ts"
+    "seed": "ts-node src/seeds/seed.ts",
+    "seed:technicians": "ts-node src/seeds/seed-technicians.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.8",
