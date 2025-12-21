@@ -17,7 +17,7 @@ import { IntakeResponseDto } from '../dto/intake-response.dto';
 import { AssetService } from '../../assets/services/asset.service';
 import { ClientService } from '../../clients/services/client.service';
 import { RateLimiter } from '../../../common/utils/rate-limiter';
-
+import { EventsGateway } from '../../../events/events.gateway';
 import { SseService } from '../../realtime/sse.service';
 
 @Injectable()
@@ -29,6 +29,7 @@ export class IntakeService {
     private readonly clientService: ClientService,
     private readonly rateLimiter: RateLimiter,
     private readonly sseService: SseService,
+    private readonly eventsGateway: EventsGateway,
   ) { }
 
   /**
@@ -92,6 +93,13 @@ export class IntakeService {
         type: saved.type,
         description: saved.description,
       },
+    });
+
+    this.eventsGateway.emitServiceRequestUpdate(saved.company_id, {
+      type: 'SERVICE_REQUEST_CREATED',
+      id: saved.id,
+      status: saved.status,
+      createdAt: saved.created_at,
     });
 
     return new IntakeResponseDto(saved.id, saved.created_at);

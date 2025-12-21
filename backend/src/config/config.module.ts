@@ -2,6 +2,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from './config.service';
 import { validateConfig } from './config';
+import { config } from 'dotenv';
+
+config();
 
 @Module({
   // Services & classes this module create

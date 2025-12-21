@@ -35,6 +35,10 @@ export class EventsGateway {
   }
 
   emitServiceRequestUpdate(companyId: string, data: any) {
+    // Emit to company-specific room
     this.server.to(`company:${companyId}`).emit('service-request.updated', data);
+    
+    // Also emit to global room for admin dashboards
+    this.server.to('global').emit('service-request.updated', data);
   }
 }
