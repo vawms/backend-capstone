@@ -31,6 +31,7 @@ export class ServiceRequestCardDto {
   type!: ServiceRequestType;
   status!: ServiceRequestStatus;
   description_preview!: string; // First 100 chars of description
+  media?: Array<{ url: string; kind: 'image' | 'video' | 'document' }>;
   asset!: AssetSummaryDto;
   client!: ClientSummaryDto;
 }

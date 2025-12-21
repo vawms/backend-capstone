@@ -18,7 +18,9 @@ describe('TechnicianController (e2e)', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
 
-    technicianRepository = moduleFixture.get<Repository<Technician>>(getRepositoryToken(Technician));
+    technicianRepository = moduleFixture.get<Repository<Technician>>(
+      getRepositoryToken(Technician),
+    );
   });
 
   afterAll(async () => {
@@ -39,13 +41,13 @@ describe('TechnicianController (e2e)', () => {
       // For this example, we'll assume the app handles the DB connection or fails gracefully if not present.
 
       return request(app.getHttpServer())
-      .post('/technicians')
-      .send(createDto)
-      .expect(201)
-      .then((response) => {
-        expect(response.body.id).toBeDefined();
-        expect(response.body.name).toEqual(createDto.name);
-      });
+        .post('/technicians')
+        .send(createDto)
+        .expect(201)
+        .then((response) => {
+          expect(response.body.id).toBeDefined();
+          expect(response.body.name).toEqual(createDto.name);
+        });
     });
   });
 

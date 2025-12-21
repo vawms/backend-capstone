@@ -121,6 +121,27 @@ export class ServiceRequestService {
     return updatedSr;
   }
 
+  async addMedia(
+    id: string,
+    files: Array<{ url: string; kind: 'image' | 'video' | 'document' }>,
+  ): Promise<ServiceRequest> {
+    const sr = await this.getServiceRequestById(id);
+
+    const existingMedia = sr.media || [];
+    sr.media = [...existingMedia, ...files];
+
+    const updatedSr = await this.serviceRequestRepository.save(sr);
+
+    this.eventsGateway.emitServiceRequestUpdate(sr.company_id, {
+      type: 'MEDIA_ADDED',
+      serviceRequestId: sr.id,
+      media: files,
+      updatedAt: sr.updated_at,
+    });
+
+    return updatedSr;
+  }
+
   /**
    * List service requests with filtering and cursor pagination
    *
@@ -156,7 +177,7 @@ export class ServiceRequestService {
       .leftJoinAndSelect('sr.asset', 'asset')
       .leftJoinAndSelect('sr.client', 'client')
       .orderBy('sr.created_at', 'DESC')
-      .addOrderBy('sr.id', 'DESC'); 
+      .addOrderBy('sr.id', 'DESC');
 
     // Filter by status
     if (status) {
@@ -245,6 +266,7 @@ export class ServiceRequestService {
       type: sr.type,
       status: sr.status,
       description_preview: sr.description.substring(0, 100),
+      media: sr.media,
       asset: {
         id: sr.asset.id,
         name: sr.asset.name,

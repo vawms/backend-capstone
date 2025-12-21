@@ -4,8 +4,8 @@ import { SseService } from './sse.service';
 
 @Global()
 @Module({
-    controllers: [RealtimeController],
-    providers: [SseService],
-    exports: [SseService],
+  controllers: [RealtimeController],
+  providers: [SseService],
+  exports: [SseService],
 })
-export class RealtimeModule { }
+export class RealtimeModule {}

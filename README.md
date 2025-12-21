@@ -1,5 +1,9 @@
 # Backend Capstone: Dev and Docker
 
+## TODO
+When a technician does not finish a job or further work needs to be done he can open a new issue to come back later. 
+The technician should be able to access previous jobs done at that site to determine its history.
+
 This is the top-level entry for running the backend using Docker and/or a Dev Container. For API usage, scripts, and detailed developer workflows, see the README inside ./backend.
 
 ## What’s Included

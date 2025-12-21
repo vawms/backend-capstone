@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { AppConfigModule } from './config/config.module';
 import { ConfigService } from './config/config.service';
 import { HealthModule } from './health/health.module';
@@ -14,6 +16,10 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
 
 @Module({
   imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
+    }),
     AppConfigModule,
     TypeOrmModule.forRootAsync({
       imports: [AppConfigModule],
@@ -36,4 +42,4 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
     RealtimeModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}

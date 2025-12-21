@@ -4,11 +4,11 @@ import { SseService } from './sse.service';
 
 @Controller('v1/realtime')
 export class RealtimeController {
-    constructor(private readonly sseService: SseService) { }
+  constructor(private readonly sseService: SseService) {}
 
-    @Sse('stream')
-    stream(@Query('companyId') companyId: string): Observable<MessageEvent> {
-        // In a real app, companyId would come from the authenticated user
-        return this.sseService.stream(companyId);
-    }
+  @Sse('stream')
+  stream(@Query('companyId') companyId: string): Observable<MessageEvent> {
+    // In a real app, companyId would come from the authenticated user
+    return this.sseService.stream(companyId);
+  }
 }

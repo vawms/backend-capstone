@@ -1,4 +1,7 @@
 import {
+  Post,
+  UseInterceptors,
+  UploadedFiles,
   Controller,
   Get,
   Patch,
@@ -10,6 +13,9 @@ import {
   ValidationPipe,
   ParseUUIDPipe,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { ServiceRequestStatus } from '../../../entities/service-request.entity';
 import { ServiceRequestService } from '../services/service-request.service';
 import { ListServiceRequestsQuery } from '../dto/list-service-requests.query';
@@ -44,6 +50,32 @@ export class ServiceRequestController {
     @Body('notes') notes: string,
   ) {
     return this.serviceRequestService.updateTechnicianNotes(id, notes);
+  }
+
+  @Post(':id/media')
+  @UseInterceptors(
+    FilesInterceptor('files', 10, {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, callback) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          callback(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+        },
+      }),
+    }),
+  )
+  @HttpCode(HttpStatus.CREATED)
+  async uploadMedia(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @UploadedFiles() files: Array<Express.Multer.File>,
+  ) {
+    const mediaFiles = files.map((file) => ({
+      url: `/uploads/${file.filename}`,
+      kind: 'image' as const, // Defaulting to image for now
+    }));
+    return await this.serviceRequestService.addMedia(id, mediaFiles);
   }
 
   /**

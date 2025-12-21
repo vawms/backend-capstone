@@ -30,7 +30,7 @@ export class IntakeService {
     private readonly rateLimiter: RateLimiter,
     private readonly sseService: SseService,
     private readonly eventsGateway: EventsGateway,
-  ) { }
+  ) {}
 
   /**
    * Create service request from QR intake form
