@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServiceRequest } from '../../entities/service-request.entity';
 import { ServiceRequestService } from './services/service-request.service';
@@ -10,7 +10,7 @@ import { TechnicianModule } from '../technicians/technician.module';
   imports: [
     TypeOrmModule.forFeature([ServiceRequest]),
     EventsModule,
-    TechnicianModule,
+    forwardRef(() => TechnicianModule),
   ],
   controllers: [ServiceRequestController],
   providers: [ServiceRequestService],
