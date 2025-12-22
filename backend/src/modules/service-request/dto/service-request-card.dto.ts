@@ -22,6 +22,14 @@ export class ClientSummaryDto {
 }
 
 /**
+ * Minimal technician summary for list view
+ */
+export class TechnicianSummaryDto {
+  id!: string;
+  name!: string;
+}
+
+/**
  * Service request card (used in list responses)
  * Minimal data; client fetches full details by calling GET /v1/service-requests/:id
  */
@@ -34,4 +42,7 @@ export class ServiceRequestCardDto {
   media?: Array<{ url: string; kind: 'image' | 'video' | 'document' }>;
   asset!: AssetSummaryDto;
   client!: ClientSummaryDto;
+  technician?: TechnicianSummaryDto;
+  technician_notes?: string;
+  scheduled_date?: Date;
 }

@@ -59,6 +59,9 @@ export class ServiceRequest {
   @Column('text')
   description!: string;
 
+  @Column('timestamp', { nullable: true })
+  scheduled_date!: Date | null;
+
   @Column('text', { nullable: true })
   technician_notes!: string;
 

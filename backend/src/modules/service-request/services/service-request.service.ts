@@ -15,6 +15,7 @@ import {
   // AssetSummaryDto,
   // ClientSummaryDto,
 } from '../dto/service-request-card.dto';
+import { UpdateServiceRequestDto } from '../dto/update-service-request.dto';
 import { Cursor, CursorData } from '../../../common/utils/cursor';
 
 @Injectable()
@@ -27,56 +28,44 @@ export class ServiceRequestService {
     private readonly technicianService: TechnicianService,
   ) {}
 
-  async updateStatus(
+  async update(
     id: string,
-    status: ServiceRequestStatus,
+    dto: UpdateServiceRequestDto,
   ): Promise<ServiceRequest> {
     const sr = await this.getServiceRequestById(id);
-    sr.status = status;
-    const updatedSr = await this.serviceRequestRepository.save(sr);
 
-    this.eventsGateway.emitServiceRequestUpdate(sr.company_id, {
-      type: 'STATUS_UPDATED',
-      serviceRequestId: sr.id,
-      status: sr.status,
-      updatedAt: sr.updated_at,
-    });
-
-    this.sseService.emit(sr.company_id, {
-      event: 'service_request.updated',
-      data: {
-        id: sr.id,
-        status: sr.status,
-        updatedAt: sr.updated_at,
-      },
-    });
-
-    return updatedSr;
-  }
-
-  async assignTechnician(
-    id: string,
-    technicianId: string,
-  ): Promise<ServiceRequest> {
-    const sr = await this.getServiceRequestById(id);
-    const technician = await this.technicianService.findOne(technicianId);
-
-    if (!technician) {
-      throw new NotFoundException(
-        `Technician with ID ${technicianId} not found`,
+    if (dto.technician_id) {
+      const technician = await this.technicianService.findOne(
+        dto.technician_id,
       );
+      if (!technician) {
+        throw new NotFoundException(
+          `Technician with ID ${dto.technician_id} not found`,
+        );
+      }
+      sr.technician = technician;
+      if (sr.status === ServiceRequestStatus.PENDING) {
+        sr.status = ServiceRequestStatus.ASSIGNED;
+      }
     }
 
-    sr.technician = technician;
-    sr.status = ServiceRequestStatus.ASSIGNED; // Auto-update status to ASSIGNED
+    if (dto.status) {
+      sr.status = dto.status;
+    }
+
+    if (dto.technician_notes !== undefined) {
+      sr.technician_notes = dto.technician_notes;
+    }
+
+    if (dto.scheduled_date !== undefined) {
+      sr.scheduled_date = dto.scheduled_date;
+    }
+
     const updatedSr = await this.serviceRequestRepository.save(sr);
 
     this.eventsGateway.emitServiceRequestUpdate(sr.company_id, {
-      type: 'TECHNICIAN_ASSIGNED',
-      serviceRequestId: sr.id,
-      technicianId: technician.id,
-      technicianName: technician.name,
-      status: sr.status,
+      type: 'UPDATED',
+      serviceRequest: updatedSr,
       updatedAt: sr.updated_at,
     });
 
@@ -84,36 +73,9 @@ export class ServiceRequestService {
       event: 'service_request.updated',
       data: {
         id: sr.id,
-        technicianId: technician.id,
         status: sr.status,
-        updatedAt: sr.updated_at,
-      },
-    });
-
-    return updatedSr;
-  }
-
-  async updateTechnicianNotes(
-    id: string,
-    notes: string,
-  ): Promise<ServiceRequest> {
-    const sr = await this.getServiceRequestById(id);
-
-    sr.technician_notes = notes;
-    const updatedSr = await this.serviceRequestRepository.save(sr);
-
-    this.eventsGateway.emitServiceRequestUpdate(sr.company_id, {
-      type: 'TECHNICIAN_NOTES_UPDATED',
-      serviceRequestId: sr.id,
-      notes: notes,
-      updatedAt: sr.updated_at,
-    });
-
-    this.sseService.emit(sr.company_id, {
-      event: 'service_request.updated',
-      data: {
-        id: sr.id,
-        notes: notes,
+        technicianId: sr.technician?.id,
+        scheduledDate: sr.scheduled_date,
         updatedAt: sr.updated_at,
       },
     });
@@ -176,6 +138,7 @@ export class ServiceRequestService {
       .createQueryBuilder('sr')
       .leftJoinAndSelect('sr.asset', 'asset')
       .leftJoinAndSelect('sr.client', 'client')
+      .leftJoinAndSelect('sr.technician', 'technician')
       .orderBy('sr.created_at', 'DESC')
       .addOrderBy('sr.id', 'DESC');
 
@@ -277,6 +240,14 @@ export class ServiceRequestService {
         name: sr.client.name,
         email: sr.client.email,
       },
+      technician: sr.technician
+        ? {
+            id: sr.technician.id,
+            name: sr.technician.name,
+          }
+        : undefined,
+      technician_notes: sr.technician_notes,
+      scheduled_date: sr.scheduled_date || undefined,
     };
   }
 }

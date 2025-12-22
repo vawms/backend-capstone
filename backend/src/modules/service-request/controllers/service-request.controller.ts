@@ -16,40 +16,23 @@ import {
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { ServiceRequestStatus } from '../../../entities/service-request.entity';
+
 import { ServiceRequestService } from '../services/service-request.service';
 import { ListServiceRequestsQuery } from '../dto/list-service-requests.query';
 import { ListServiceRequestsResponseDto } from '../dto/list-service-requests-response.dto';
+import { UpdateServiceRequestDto } from '../dto/update-service-request.dto';
 
 @Controller('v1/service-requests')
 export class ServiceRequestController {
   constructor(private readonly serviceRequestService: ServiceRequestService) {}
 
-  @Patch(':id/status')
+  @Patch(':id')
   @HttpCode(HttpStatus.OK)
-  async updateStatus(
+  async update(
     @Param('id', new ParseUUIDPipe()) id: string,
-    @Body('status') status: ServiceRequestStatus,
+    @Body(ValidationPipe) dto: UpdateServiceRequestDto,
   ) {
-    return this.serviceRequestService.updateStatus(id, status);
-  }
-
-  @Patch(':id/assign')
-  @HttpCode(HttpStatus.OK)
-  async assignTechnician(
-    @Param('id', new ParseUUIDPipe()) id: string,
-    @Body('technician_id', new ParseUUIDPipe()) technicianId: string,
-  ) {
-    return this.serviceRequestService.assignTechnician(id, technicianId);
-  }
-
-  @Patch(':id/technician-notes')
-  @HttpCode(HttpStatus.OK)
-  async updateTechnicianNotes(
-    @Param('id', new ParseUUIDPipe()) id: string,
-    @Body('notes') notes: string,
-  ) {
-    return this.serviceRequestService.updateTechnicianNotes(id, notes);
+    return this.serviceRequestService.update(id, dto);
   }
 
   @Post(':id/media')

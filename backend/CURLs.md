@@ -388,13 +388,18 @@ curl http://localhost:3000/technicians/company/<company_id>
 
 ## Service Request Management
 
-### Update Service Request Status
+### Update Service Request
+
+Update one or more fields of a service request. All fields are optional.
 
 ```bash
-curl -X PATCH http://localhost:3000/v1/service-requests/<serviceRequestId>/status \
+curl -X PATCH http://localhost:3000/v1/service-requests/<serviceRequestId> \
   -H "Content-Type: application/json" \
   -d '{
-    "status": "ASSIGNED"
+    "status": "ASSIGNED",
+    "technician_id": "Technician ID (UUID)",
+    "technician_notes": "Contacted customer. Will visit tomorrow at 10AM.",
+    "scheduled_date": "2025-12-25T10:00:00Z"
   }'
 ```
 
@@ -406,47 +411,9 @@ curl -X PATCH http://localhost:3000/v1/service-requests/<serviceRequestId>/statu
 {
   "id": "Service Request ID (UUID)",
   "status": "ASSIGNED",
-  "updated_at": "Date (ISO 8601)"
-}
-```
-
-### Assign Technician to Service Request
-
-```bash
-curl -X PATCH http://localhost:3000/v1/service-requests/<serviceRequestId>/assign \
-  -H "Content-Type: application/json" \
-  -d '{
-    "technician_id": "Technician ID (UUID)"
-  }'
-```
-
-#### Response
-
-```json
-{
-  "id": "Service Request ID (UUID)",
   "technician_id": "Technician ID (UUID)",
-  "status": "ASSIGNED",
-  "updated_at": "Date (ISO 8601)"
-}
-```
-
-### Add/Update Technician Notes
-
-```bash
-curl -X PATCH http://localhost:3000/v1/service-requests/<serviceRequestId>/technician-notes \
-  -H "Content-Type: application/json" \
-  -d '{
-    "notes": "Contacted customer. Will visit tomorrow at 10AM."
-  }'
-```
-
-#### Response
-
-```json
-{
-  "id": "Service Request ID (UUID)",
   "technician_notes": "Contacted customer. Will visit tomorrow at 10AM.",
+  "scheduled_date": "2025-12-25T10:00:00.000Z",
   "updated_at": "Date (ISO 8601)"
 }
 ```
