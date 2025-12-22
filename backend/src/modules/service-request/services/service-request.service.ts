@@ -83,21 +83,42 @@ export class ServiceRequestService {
     return updatedSr;
   }
 
-  async addMedia(
+  async addClientMedia(
     id: string,
     files: Array<{ url: string; kind: 'image' | 'video' | 'document' }>,
   ): Promise<ServiceRequest> {
     const sr = await this.getServiceRequestById(id);
 
-    const existingMedia = sr.media || [];
-    sr.media = [...existingMedia, ...files];
+    const existingMedia = sr.client_media || [];
+    sr.client_media = [...existingMedia, ...files];
 
     const updatedSr = await this.serviceRequestRepository.save(sr);
 
     this.eventsGateway.emitServiceRequestUpdate(sr.company_id, {
-      type: 'MEDIA_ADDED',
+      type: 'CLIENT_MEDIA_ADDED',
       serviceRequestId: sr.id,
-      media: files,
+      client_media: files,
+      updatedAt: sr.updated_at,
+    });
+
+    return updatedSr;
+  }
+
+  async addTechnicianMedia(
+    id: string,
+    files: Array<{ url: string; kind: 'image' | 'video' | 'document' }>,
+  ): Promise<ServiceRequest> {
+    const sr = await this.getServiceRequestById(id);
+
+    const existingMedia = sr.technician_media || [];
+    sr.technician_media = [...existingMedia, ...files];
+
+    const updatedSr = await this.serviceRequestRepository.save(sr);
+
+    this.eventsGateway.emitServiceRequestUpdate(sr.company_id, {
+      type: 'TECHNICIAN_MEDIA_ADDED',
+      serviceRequestId: sr.id,
+      technician_media: files,
       updatedAt: sr.updated_at,
     });
 
@@ -229,7 +250,8 @@ export class ServiceRequestService {
       type: sr.type,
       status: sr.status,
       description_preview: sr.description.substring(0, 100),
-      media: sr.media,
+      client_media: sr.client_media,
+      technician_media: sr.technician_media,
       asset: {
         id: sr.asset.id,
         name: sr.asset.name,

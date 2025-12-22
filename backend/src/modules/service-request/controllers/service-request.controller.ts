@@ -35,7 +35,7 @@ export class ServiceRequestController {
     return this.serviceRequestService.update(id, dto);
   }
 
-  @Post(':id/media')
+  @Post(':id/client-media')
   @UseInterceptors(
     FilesInterceptor('files', 10, {
       storage: diskStorage({
@@ -58,7 +58,33 @@ export class ServiceRequestController {
       url: `/uploads/${file.filename}`,
       kind: 'image' as const, // Defaulting to image for now
     }));
-    return await this.serviceRequestService.addMedia(id, mediaFiles);
+    return await this.serviceRequestService.addClientMedia(id, mediaFiles);
+  }
+
+  @Post(':id/technician-media')
+  @UseInterceptors(
+    FilesInterceptor('files', 10, {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, callback) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          callback(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+        },
+      }),
+    }),
+  )
+  @HttpCode(HttpStatus.CREATED)
+  async uploadTechnicianMedia(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @UploadedFiles() files: Array<Express.Multer.File>,
+  ) {
+    const mediaFiles = files.map((file) => ({
+      url: `/uploads/${file.filename}`,
+      kind: 'image' as const, // Defaulting to image for now
+    }));
+    return await this.serviceRequestService.addTechnicianMedia(id, mediaFiles);
   }
 
   /**
@@ -103,7 +129,8 @@ export class ServiceRequestController {
       status: sr.status,
       channel: sr.channel,
       description: sr.description,
-      media: sr.media,
+      client_media: sr.client_media,
+      technician_media: sr.technician_media,
       asset: {
         id: sr.asset.id,
         name: sr.asset.name,

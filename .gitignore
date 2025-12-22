@@ -5,3 +5,4 @@
 /infra/pgdata
 /infra/minio_data
 /backend/.env
+/backend/uploads/

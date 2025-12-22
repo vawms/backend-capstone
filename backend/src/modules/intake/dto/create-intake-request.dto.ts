@@ -69,5 +69,5 @@ export class CreateIntakeRequestDto {
   @ArrayMaxSize(10) // Max 10 media items
   @ValidateNested({ each: true })
   @Type(() => MediaItemDto)
-  media?: MediaItemDto[];
+  client_media?: MediaItemDto[];
 }

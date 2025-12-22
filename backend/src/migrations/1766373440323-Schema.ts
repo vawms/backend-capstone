@@ -1,14 +1,14 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class Schema1766363313766 implements MigrationInterface {
-    name = 'Schema1766363313766'
+export class Schema1766373440323 implements MigrationInterface {
+    name = 'Schema1766373440323'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE "technicians" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "company_id" uuid NOT NULL, "name" text NOT NULL, "email" text NOT NULL, "phone" text NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_b14514b23605f79475be53065b3" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TYPE "public"."service_requests_channel_enum" AS ENUM('QR', 'MANUAL')`);
         await queryRunner.query(`CREATE TYPE "public"."service_requests_type_enum" AS ENUM('MAINTENANCE', 'MALFUNCTION')`);
         await queryRunner.query(`CREATE TYPE "public"."service_requests_status_enum" AS ENUM('PENDING', 'ASSIGNED', 'SCHEDULED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED')`);
-        await queryRunner.query(`CREATE TABLE "service_requests" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "company_id" uuid NOT NULL, "asset_id" uuid NOT NULL, "client_id" uuid, "channel" "public"."service_requests_channel_enum" NOT NULL, "type" "public"."service_requests_type_enum" NOT NULL, "description" text NOT NULL, "scheduled_date" TIMESTAMP, "technician_notes" text, "media" jsonb, "status" "public"."service_requests_status_enum" NOT NULL DEFAULT 'PENDING', "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "technician_id" uuid, CONSTRAINT "PK_ee60bcd826b7e130bfbd97daf66" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "service_requests" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "company_id" uuid NOT NULL, "asset_id" uuid NOT NULL, "client_id" uuid, "channel" "public"."service_requests_channel_enum" NOT NULL, "type" "public"."service_requests_type_enum" NOT NULL, "description" text NOT NULL, "scheduled_date" TIMESTAMP, "technician_notes" text, "client_media" jsonb, "technician_media" jsonb, "status" "public"."service_requests_status_enum" NOT NULL DEFAULT 'PENDING', "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "technician_id" uuid, CONSTRAINT "PK_ee60bcd826b7e130bfbd97daf66" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "idx_service_requests_status" ON "service_requests" ("status") `);
         await queryRunner.query(`CREATE INDEX "idx_service_requests_company_created" ON "service_requests" ("company_id", "created_at") `);
         await queryRunner.query(`CREATE TABLE "clients" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "company_id" uuid NOT NULL, "name" character varying NOT NULL, "email" character varying NOT NULL, "phone" character varying, "created_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_f1ab7cf3a5714dbc6bb4e1c28a4" PRIMARY KEY ("id"))`);

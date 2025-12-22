@@ -78,7 +78,7 @@ export class IntakeService {
       channel: ServiceRequestChannel.QR,
       type: dto.type,
       description: dto.description,
-      media: dto.media || [],
+      client_media: dto.client_media || [],
       status: ServiceRequestStatus.PENDING,
     });
 

@@ -66,7 +66,10 @@ export class ServiceRequest {
   technician_notes!: string;
 
   @Column('jsonb', { nullable: true })
-  media!: Array<{ url: string; kind: 'image' | 'video' | 'document' }>;
+  client_media!: Array<{ url: string; kind: 'image' | 'video' | 'document' }>;
+
+  @Column('jsonb', { nullable: true })
+  technician_media!: Array<{ url: string; kind: 'image' | 'video' | 'document' }>;
 
   @Column('enum', {
     enum: ServiceRequestStatus,
