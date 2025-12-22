@@ -3,6 +3,7 @@ import {
   IsNotEmpty,
   IsNumber,
   IsString,
+  IsOptional,
   // IsUrl,
   validateSync,
 } from 'class-validator';
@@ -37,6 +38,26 @@ export class ConfigSchema {
   @IsNotEmpty()
   @IsString()
   NODE_ENV: string = 'development';
+
+  @IsOptional()
+  @IsString()
+  SMTP_HOST?: string;
+
+  @IsOptional()
+  @IsNumber()
+  SMTP_PORT?: number;
+
+  @IsOptional()
+  @IsString()
+  SMTP_USER?: string;
+
+  @IsOptional()
+  @IsString()
+  SMTP_PASS?: string;
+
+  @IsOptional()
+  @IsString()
+  SMTP_FROM?: string;
 }
 
 // Takes raw environment variables and converts them into appropriate types and checks with decorators

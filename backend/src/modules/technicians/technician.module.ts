@@ -6,7 +6,6 @@ import { Technician } from '../../entities/technician.entity';
 import { Company } from '../../entities/company.entity';
 import { ServiceRequestModule } from '../service-request/service-request.module';
 
-
 @Module({
   imports: [
     TypeOrmModule.forFeature([Technician, Company]),

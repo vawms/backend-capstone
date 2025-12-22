@@ -19,6 +19,7 @@ import { ClientService } from '../../clients/services/client.service';
 import { RateLimiter } from '../../../common/utils/rate-limiter';
 import { EventsGateway } from '../../../events/events.gateway';
 import { SseService } from '../../realtime/sse.service';
+import { MailService } from '../../mail/mail.service';
 
 @Injectable()
 export class IntakeService {
@@ -30,6 +31,7 @@ export class IntakeService {
     private readonly rateLimiter: RateLimiter,
     private readonly sseService: SseService,
     private readonly eventsGateway: EventsGateway,
+    private readonly mailService: MailService,
   ) {}
 
   /**
@@ -101,6 +103,16 @@ export class IntakeService {
       status: saved.status,
       createdAt: saved.created_at,
     });
+
+    if (client.email) {
+      // Re-fetch or reconstruct if needed, but 'saved' should be enough if we manually attach client/asset or if saved returns them (it won't fully).
+      // Ideally we want to send the full details.
+      // 'saved' has client_id and asset_id.
+      // Let's attach them for the email content.
+      saved.client = client;
+      saved.asset = assetEntity; // from lines above
+      await this.mailService.sendServiceRequestCreated(client.email, saved);
+    }
 
     return new IntakeResponseDto(saved.id, saved.created_at);
   }

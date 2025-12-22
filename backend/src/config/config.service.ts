@@ -32,6 +32,25 @@ export class ConfigService {
   // get s3SecretKey(): string {
   //   return this.config.S3_SECRET_KEY;
   // }
+  get smtpHost(): string | undefined {
+    return this.config.SMTP_HOST;
+  }
+
+  get smtpPort(): number | undefined {
+    return this.config.SMTP_PORT;
+  }
+
+  get smtpUser(): string | undefined {
+    return this.config.SMTP_USER;
+  }
+
+  get smtpPass(): string | undefined {
+    return this.config.SMTP_PASS;
+  }
+
+  get smtpFrom(): string | undefined {
+    return this.config.SMTP_FROM;
+  }
 
   get nodeEnv(): string {
     return this.config.NODE_ENV;

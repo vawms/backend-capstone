@@ -12,7 +12,7 @@ async function seedTechnicians() {
 
   // Get the first company (or create one if none exists)
   let company = await companyRepo.findOne({ where: {} });
-  
+
   if (!company) {
     console.log('No company found. Creating one first...');
     company = companyRepo.create({

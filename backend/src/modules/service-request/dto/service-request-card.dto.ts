@@ -40,7 +40,10 @@ export class ServiceRequestCardDto {
   status!: ServiceRequestStatus;
   description_preview!: string; // First 100 chars of description
   client_media?: Array<{ url: string; kind: 'image' | 'video' | 'document' }>;
-  technician_media?: Array<{ url: string; kind: 'image' | 'video' | 'document' }>;
+  technician_media?: Array<{
+    url: string;
+    kind: 'image' | 'video' | 'document';
+  }>;
   asset!: AssetSummaryDto;
   client!: ClientSummaryDto;
   technician?: TechnicianSummaryDto;

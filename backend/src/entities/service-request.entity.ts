@@ -69,7 +69,10 @@ export class ServiceRequest {
   client_media!: Array<{ url: string; kind: 'image' | 'video' | 'document' }>;
 
   @Column('jsonb', { nullable: true })
-  technician_media!: Array<{ url: string; kind: 'image' | 'video' | 'document' }>;
+  technician_media!: Array<{
+    url: string;
+    kind: 'image' | 'video' | 'document';
+  }>;
 
   @Column('enum', {
     enum: ServiceRequestStatus,

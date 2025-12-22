@@ -7,6 +7,7 @@ import { AssetModule } from '../assets/asset.module';
 import { ClientModule } from '../clients/client.module';
 import { RateLimiter } from 'src/common/utils/rate-limiter';
 import { EventsModule } from '../../events/events.module'; // ADD THIS
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { EventsModule } from '../../events/events.module'; // ADD THIS
     AssetModule,
     ClientModule,
     EventsModule,
+    MailModule,
   ],
   controllers: [IntakeController],
   providers: [IntakeService, RateLimiter],

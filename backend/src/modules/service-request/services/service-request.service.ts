@@ -8,6 +8,7 @@ import {
 import { EventsGateway } from '../../../events/events.gateway';
 import { SseService } from '../../realtime/sse.service';
 import { TechnicianService } from '../../technicians/services/technician.service';
+import { MailService } from '../../mail/mail.service';
 import { ListServiceRequestsQuery } from '../dto/list-service-requests.query';
 import { ListServiceRequestsResponseDto } from '../dto/list-service-requests-response.dto';
 import {
@@ -26,6 +27,7 @@ export class ServiceRequestService {
     private readonly eventsGateway: EventsGateway,
     private readonly sseService: SseService,
     private readonly technicianService: TechnicianService,
+    private readonly mailService: MailService,
   ) {}
 
   async update(
@@ -79,6 +81,13 @@ export class ServiceRequestService {
         updatedAt: sr.updated_at,
       },
     });
+
+    if (updatedSr.client && updatedSr.client.email) {
+      await this.mailService.sendServiceRequestUpdate(
+        updatedSr.client.email,
+        updatedSr,
+      );
+    }
 
     return updatedSr;
   }
