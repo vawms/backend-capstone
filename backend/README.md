@@ -119,163 +119,80 @@ Note: Public endpoints intentionally return limited fields.
   - GET /v1/service-requests?status=&from=&to=&cursor=&limit=
     - Cursor-based pagination (createdAt desc, then id desc)
     - Returns minimal cards
-  - GET /v1/service-requests/:id (full details)
-  - PATCH /v1/service-requests/:id/status (update status)
-  - PATCH /v1/service-requests/:id/assign (assign technician)
-  - PATCH /v1/service-requests/:id/technician-notes (add/update notes)
+  - GET /v1/service-requests/:id (full details including media)
+  - PATCH /v1/service-requests/:id (update status, assign tech, notes, scheduled date)
+  - POST /v1/service-requests/:id/client-media (upload media for client)
+  - POST /v1/service-requests/:id/technician-media (upload media for technician)
 
 - Technicians
-  - POST v1/technicians (create technician)
-  - GET v1/technicians (list all technicians)
-  - GET v1/technicians/company/:companyId (list by company)
+  - POST /v1/technicians (create technician)
+  - GET /v1/technicians (list all technicians)
+  - GET /v1/technicians/company/:companyId (list by company)
+  - GET /v1/technicians/:id/service-requests (list requests for technician)
 
-## WebSocket Real-Time Events
+## SSE Real-Time Events
 
-The backend uses **Socket.IO** for real-time updates. This allows the operator dashboard to receive instant notifications when service requests are created or updated without polling.
+The backend uses **Server-Sent Events (SSE)** for real-time updates. This allows the operator dashboard or technician view to receive instant notifications when service requests are created or updated without polling.
 
 ### Connection
 
-Connect to the WebSocket server at the same base URL as your API:
+Connect to the SSE stream using the `EventSource` API (native in modern browsers):
 
 ```javascript
-// Using Socket.IO client library
-import { io } from 'socket.io-client';
-
-const socket = io('http://localhost:3000', {
-  transports: ['websocket', 'polling'], // Try WebSocket first, fallback to polling
-});
-
-socket.on('connect', () => {
-  console.log('Connected to WebSocket server');
-  console.log('Socket ID:', socket.id);
-});
-
-socket.on('disconnect', () => {
-  console.log('Disconnected from WebSocket server');
-});
-```
-
-### Joining Rooms
-
-To receive events for a specific company, join the company's room:
-
-```javascript
-// Join a company room to receive updates for that company
 const companyId = 'your-company-uuid';
-socket.emit('joinRoom', `company:${companyId}`, (response) => {
-  console.log('Joined room:', response);
-  // Response: { event: 'joinedRoom', room: 'company:your-company-uuid' }
-});
+const eventSource = new EventSource(`http://localhost:3000/v1/realtime/stream?companyId=${companyId}`);
+
+eventSource.onopen = () => {
+  console.log('Connected to SSE stream');
+};
+
+eventSource.onerror = (err) => {
+  console.error('SSE Error:', err);
+  // EventSource automatically attempts to reconnect
+};
 ```
 
 ### Listening to Events
 
-Once joined to a company room, listen for service request updates:
+Events are sent as JSON strings in the `data` field of the message. Since NestJS SSE implementation often sends unnamed events (message events), you typically listen to `onmessage`.
 
 ```javascript
-// Listen for service request updates
-socket.on('service-request.updated', (data) => {
-  console.log('Service request updated:', data);
+eventSource.onmessage = (event) => {
+  const parsedData = JSON.parse(event.data);
+  console.log('Received event:', parsedData);
   
-  // Data structure:
+  // Data structure example:
   // {
-  //   id: 'service-request-uuid',
-  //   status: 'PENDING' | 'ASSIGNED' | 'SCHEDULED' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED',
-  //   technician_id: 'technician-uuid' (if assigned),
-  //   updated_at: '2025-11-25T09:30:00.000Z'
+  //   type: 'service-request.updated',
+  //   data: {
+  //     id: 'service-request-uuid',
+  //     status: 'PENDING',
+  //     updated_at: '2025-11-25T09:30:00.000Z'
+  //   }
   // }
   
-  // Update your UI with the new data
-  updateServiceRequestInUI(data);
-});
-```
-
-### Leaving Rooms
-
-When navigating away or cleaning up:
-
-```javascript
-// Leave a company room
-socket.emit('leaveRoom', `company:${companyId}`, (response) => {
-  console.log('Left room:', response);
-  // Response: { event: 'leftRoom', room: 'company:your-company-uuid' }
-});
-
-// Disconnect when done
-socket.disconnect();
-```
-
-### Complete Example (HTML + JavaScript)
-
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Service Request Dashboard</title>
-  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-</head>
-<body>
-  <h1>Service Request Dashboard</h1>
-  <div id="status">Disconnected</div>
-  <div id="events"></div>
-
-  <script>
-    const socket = io('http://localhost:3000');
-    const companyId = 'your-company-uuid'; // Replace with actual company ID
-    
-    socket.on('connect', () => {
-      document.getElementById('status').textContent = 'Connected ✓';
-      
-      // Join the company room
-      socket.emit('joinRoom', `company:${companyId}`);
-    });
-    
-    socket.on('disconnect', () => {
-      document.getElementById('status').textContent = 'Disconnected ✗';
-    });
-    
-    socket.on('service-request.updated', (data) => {
-      const eventsDiv = document.getElementById('events');
-      const eventItem = document.createElement('div');
-      eventItem.innerHTML = `
-        <strong>Service Request ${data.id}</strong><br>
-        Status: ${data.status}<br>
-        Updated: ${new Date(data.updated_at).toLocaleString()}<br>
-        ${data.technician_id ? `Technician: ${data.technician_id}` : ''}
-        <hr>
-      `;
-      eventsDiv.prepend(eventItem);
-    });
-  </script>
-</body>
-</html>
+  if (parsedData.type === 'service-request.updated') {
+     updateServiceRequestInUI(parsedData.data);
+  }
+};
 ```
 
 ### Events Emitted by Server
 
-| Event Name | Description | Data Structure |
+| Event Type | Description | Data Structure |
 |------------|-------------|----------------|
-| `service-request.updated` | Emitted when a service request is created, status updated, technician assigned, or notes added | `{ id, status, technician_id?, updated_at }` |
+| `service-request.updated` | Emitted when a service request is created or updated | `{ id, status, technician_id?, updated_at }` |
 
-### Installation (Client)
+### Closing Connection
 
-To use Socket.IO in your frontend application:
-
-**NPM/Yarn:**
-```bash
-npm install socket.io-client
-# or
-yarn add socket.io-client
-```
-
-**CDN (Browser):**
-```html
-<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+```javascript
+// Close the connection when component unmounts or user logs out
+eventSource.close();
 ```
 
 ### CORS Configuration
 
-The WebSocket server is configured to accept connections from any origin (`*`). For production, you should restrict this to your frontend domain(s) in the gateway configuration file.
+The SSE endpoint is configured to accept connections. For production, ensure your gateway matches the relevant origins.
 
 
 

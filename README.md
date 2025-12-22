@@ -10,6 +10,9 @@ This is the top-level entry for running the backend using Docker and/or a Dev Co
 
 - NestJS backend in ./backend
 - PostgreSQL (via Docker Compose)
+- Real-time updates via SSE (Server-Sent Events)
+- Technician management and workflows
+- Media upload (local storage)
 - Optional MinIO service (planned/optional)
 - Dev Container configuration for VS Code
 

@@ -293,7 +293,8 @@ curl http://localhost:3000/v1/service-requests/<serviceRequestId>
   "status": "PENDING",
   "channel": "QR",
   "description": "Full description",
-  "media": [{ "url": "https://example.com/photo.jpg", "kind": "image" }],
+  "client_media": [{ "url": "https://example.com/photo.jpg", "kind": "image" }],
+  "technician_media": [{ "url": "https://example.com/tech_photo.jpg", "kind": "image" }],
   "asset": {
     "id": "Asset ID (UUID)",
     "name": "Asset Name",
@@ -308,7 +309,10 @@ curl http://localhost:3000/v1/service-requests/<serviceRequestId>
     "name": "Client Name",
     "email": "client@example.com",
     "phone": "+1-555-0123"
-  }
+  },
+  "technician_id": "Technician ID (UUID)",
+  "technician_notes": "Note content",
+  "scheduled_date": "2025-12-25T10:00:00Z"
 }
 ```
 
@@ -317,7 +321,7 @@ curl http://localhost:3000/v1/service-requests/<serviceRequestId>
 ### Create Technician
 
 ```bash
-curl -X POST http://localhost:3000/technicians \
+curl -X POST http://localhost:3000/v1/technicians \
   -H "Content-Type: application/json" \
   -d '{
     "company_id": "Company ID (UUID)",
@@ -344,7 +348,7 @@ curl -X POST http://localhost:3000/technicians \
 ### List All Technicians
 
 ```bash
-curl http://localhost:3000/technicians
+curl http://localhost:3000/v1/technicians
 ```
 
 #### Response
@@ -366,7 +370,7 @@ curl http://localhost:3000/technicians
 ### Get Technicians by Company
 
 ```bash
-curl http://localhost:3000/technicians/company/<company_id>
+curl http://localhost:3000/v1/technicians/company/<company_id>
 ```
 
 #### Response
@@ -385,6 +389,17 @@ curl http://localhost:3000/technicians/company/<company_id>
   }
 ]
 ```
+
+### Get Service Requests by Technician
+
+```bash
+curl http://localhost:3000/v1/technicians/<technician_id>/service-requests
+```
+
+#### Response
+
+Same format as [List Service Requests](#list-service-requests-with-filters--cursor-pagination)
+
 
 ## Service Request Management
 
@@ -416,6 +431,44 @@ curl -X PATCH http://localhost:3000/v1/service-requests/<serviceRequestId> \
   "scheduled_date": "2025-12-25T10:00:00.000Z",
   "updated_at": "Date (ISO 8601)"
 }
+```
+
+### Upload Client Media
+
+```bash
+curl -X POST http://localhost:3000/v1/service-requests/<serviceRequestId>/client-media \
+  -H "Content-Type: multipart/form-data" \
+  -F "files=@/path/to/image.jpg"
+```
+
+#### Response
+
+```json
+[
+  {
+    "url": "/uploads/files-123456789.jpg",
+    "kind": "image"
+  }
+]
+```
+
+### Upload Technician Media
+
+```bash
+curl -X POST http://localhost:3000/v1/service-requests/<serviceRequestId>/technician-media \
+  -H "Content-Type: multipart/form-data" \
+  -F "files=@/path/to/image.jpg"
+```
+
+#### Response
+
+```json
+[
+  {
+    "url": "/uploads/files-123456789.jpg",
+    "kind": "image"
+  }
+]
 ```
 
 ### Filter Service Requests by Technician
