@@ -23,4 +23,8 @@ export class UpdateServiceRequestDto {
   @IsDateString()
   @IsOptional()
   scheduled_date?: Date;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
 }

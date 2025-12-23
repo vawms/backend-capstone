@@ -11,6 +11,10 @@ export class AssetSummaryDto {
   name!: string;
   model!: string;
   company_name!: string;
+  location_lng!: number;
+  location_lat!: number;
+  location_address!: string;
+  qr_token!: string;
 }
 
 /**

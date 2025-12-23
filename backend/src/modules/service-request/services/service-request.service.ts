@@ -63,6 +63,10 @@ export class ServiceRequestService {
       sr.scheduled_date = dto.scheduled_date;
     }
 
+    if (dto.description !== undefined) {
+      sr.description = dto.description;
+    }
+
     const updatedSr = await this.serviceRequestRepository.save(sr);
 
     this.eventsGateway.emitServiceRequestUpdate(sr.company_id, {
@@ -266,7 +270,11 @@ export class ServiceRequestService {
         id: sr.asset.id,
         name: sr.asset.name,
         model: sr.asset.model,
-        company_name: sr.asset.company?.name || 'Unknown',
+        company_name: sr.asset.company.name,
+        location_lng: sr.asset.location_lng,
+        location_lat: sr.asset.location_lat,
+        location_address: sr.asset.location_address,
+        qr_token: sr.asset.qr_token,
       },
       client: {
         id: sr.client.id,
