@@ -10,6 +10,7 @@ export class AssetSummaryDto {
   id!: string;
   name!: string;
   model!: string;
+  company_name!: string;
 }
 
 /**

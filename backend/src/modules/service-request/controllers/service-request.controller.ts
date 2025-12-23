@@ -139,6 +139,7 @@ export class ServiceRequestController {
         location_address: sr.asset.location_address,
         location_lat: sr.asset.location_lat,
         location_lng: sr.asset.location_lng,
+        company_name: sr.asset.company.name,
       },
       client: {
         id: sr.client.id,

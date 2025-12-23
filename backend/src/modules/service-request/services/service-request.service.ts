@@ -167,6 +167,7 @@ export class ServiceRequestService {
     let qb = this.serviceRequestRepository
       .createQueryBuilder('sr')
       .leftJoinAndSelect('sr.asset', 'asset')
+      .leftJoinAndSelect('asset.company', 'company')
       .leftJoinAndSelect('sr.client', 'client')
       .leftJoinAndSelect('sr.technician', 'technician')
       .orderBy('sr.created_at', 'DESC')
@@ -239,7 +240,7 @@ export class ServiceRequestService {
   async getServiceRequestById(id: string): Promise<ServiceRequest> {
     const sr = await this.serviceRequestRepository.findOne({
       where: { id },
-      relations: ['asset', 'client'],
+      relations: ['asset', 'asset.company', 'client'],
     });
 
     if (!sr) {
@@ -265,6 +266,7 @@ export class ServiceRequestService {
         id: sr.asset.id,
         name: sr.asset.name,
         model: sr.asset.model,
+        company_name: sr.asset.company?.name || 'Unknown',
       },
       client: {
         id: sr.client.id,
