@@ -6,3 +6,4 @@
 /infra/minio_data
 /backend/.env
 /backend/uploads/
+token.txt

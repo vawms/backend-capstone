@@ -9,8 +9,28 @@ export class ConfigService {
   constructor(private readonly config: ConfigSchema) {}
 
   // Getter methods that make it so that all config access go through this service
-  get databaseUrl(): string {
+  get databaseUrl(): string | undefined {
     return this.config.DATABASE_URL;
+  }
+
+  get dbHost(): string {
+    return this.config.DB_HOST;
+  }
+
+  get dbPort(): number {
+    return this.config.DB_PORT;
+  }
+
+  get dbUsername(): string {
+    return this.config.DB_USERNAME;
+  }
+
+  get dbPassword(): string {
+    return this.config.DB_PASSWORD;
+  }
+
+  get dbDatabase(): string {
+    return this.config.DB_DATABASE;
   }
 
   get port(): number {
@@ -54,5 +74,9 @@ export class ConfigService {
 
   get nodeEnv(): string {
     return this.config.NODE_ENV;
+  }
+
+  get jwtSecret(): string {
+    return this.config.JWT_SECRET;
   }
 }

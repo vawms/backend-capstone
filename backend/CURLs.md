@@ -16,12 +16,57 @@ curl http://localhost:3000/health
 }
 ```
 
+## Authentication
+
+### Login
+
+Used to obtain a JWT token for use in other requests.
+
+```bash
+curl -X POST http://localhost:3000/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "operator",
+    "password": "operator123"
+  }'
+```
+
+#### Response
+
+```json
+{
+  "access_token": "your.long.jwt.token"
+}
+```
+
+### Get User Profile
+
+Verifies that the JWT token is valid and returns user information.
+
+```bash
+curl http://localhost:3000/v1/auth/profile \
+  -H "Authorization: Bearer <your_access_token>"
+```
+
+#### Response
+
+```json
+{
+  "userId": "User ID (UUID)",
+  "username": "operator",
+  "role": "OPERATOR",
+  "companyId": "Company ID (UUID)",
+  "technicianId": null
+}
+```
+
 ## Companies
 
-### Creating Company
+### Creating Company (Guarded)
 
 ```bash
 curl -X POST http://localhost:3000/v1/companies \
+  -H "Authorization: Bearer <your_access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Company Name",
@@ -43,10 +88,11 @@ curl -X POST http://localhost:3000/v1/companies \
 }
 ```
 
-### Get Company by ID
+### Get Company by ID (Guarded)
 
 ```bash
-curl http://localhost:3000/v1/companies/<company_id>
+curl http://localhost:3000/v1/companies/<company_id> \
+  -H "Authorization: Bearer <your_access_token>"
 ```
 
 #### Response
@@ -62,10 +108,11 @@ curl http://localhost:3000/v1/companies/<company_id>
 }
 ```
 
-### List Companies
+### List Companies (Guarded)
 
 ```bash
-curl http://localhost:3000/v1/companies
+curl http://localhost:3000/v1/companies \
+  -H "Authorization: Bearer <your_access_token>"
 ```
 
 #### Response
@@ -85,10 +132,11 @@ curl http://localhost:3000/v1/companies
 
 ## Assets
 
-### Creating Asset
+### Creating Asset (Guarded + Operator Role Required)
 
 ```bash
 curl -X POST http://localhost:3000/v1/assets \
+  -H "Authorization: Bearer <your_access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "company_id": "Company ID (UUID)",
@@ -118,10 +166,11 @@ curl -X POST http://localhost:3000/v1/assets \
 }
 ```
 
-### Get Asset by ID
+### Get Asset by ID (Guarded)
 
 ```bash
-curl http://localhost:3000/v1/assets/<assetId>
+curl http://localhost:3000/v1/assets/<assetId> \
+  -H "Authorization: Bearer <your_access_token>"
 ```
 
 #### Response
@@ -141,10 +190,11 @@ curl http://localhost:3000/v1/assets/<assetId>
 }
 ```
 
-### Get Asset QR Token + Intake URL
+### Get Asset QR Token + Intake URL (Guarded)
 
 ```bash
-curl -X POST http://localhost:3000/v1/assets/<assetId>/qr
+curl -X POST http://localhost:3000/v1/assets/<assetId>/qr \
+  -H "Authorization: Bearer <your_access_token>"
 ```
 
 #### Response
@@ -225,26 +275,32 @@ curl http://localhost:3000/v1/public/intake/<qr_token>/status
 
 ## Operator: Service Requests
 
-### List Service Requests (with filters + cursor pagination)
+### List Service Requests (Guarded)
 
 ```bash
 # Basic (latest first, default limit=20)
-curl "http://localhost:3000/v1/service-requests"
+curl "http://localhost:3000/v1/service-requests" \
+  -H "Authorization: Bearer <your_access_token>"
 
 # Filter by single status
-curl "http://localhost:3000/v1/service-requests?status=PENDING"
+curl "http://localhost:3000/v1/service-requests?status=PENDING" \
+  -H "Authorization: Bearer <your_access_token>"
 
 # Filter by multiple statuses
-curl "http://localhost:3000/v1/service-requests?status=PENDING&status=ASSIGNED"
+curl "http://localhost:3000/v1/service-requests?status=PENDING&status=ASSIGNED" \
+  -H "Authorization: Bearer <your_access_token>"
 
 # Date range (inclusive). Use ISO 8601 dates (YYYY-MM-DD).
-curl "http://localhost:3000/v1/service-requests?from=2025-11-01&to=2025-11-30"
+curl "http://localhost:3000/v1/service-requests?from=2025-11-01&to=2025-11-30" \
+  -H "Authorization: Bearer <your_access_token>"
 
 # Limit page size
-curl "http://localhost:3000/v1/service-requests?limit=10"
+curl "http://localhost:3000/v1/service-requests?limit=10" \
+  -H "Authorization: Bearer <your_access_token>"
 
 # Use cursor from previous response to fetch next page
-curl "http://localhost:3000/v1/service-requests?cursor=<nextCursor>&limit=10"
+curl "http://localhost:3000/v1/service-requests?cursor=<nextCursor>&limit=10" \
+  -H "Authorization: Bearer <your_access_token>"
 ```
 
 #### Response
@@ -276,10 +332,11 @@ curl "http://localhost:3000/v1/service-requests?cursor=<nextCursor>&limit=10"
 }
 ```
 
-### Get Service Request by ID (full details)
+### Get Service Request by ID (Guarded)
 
 ```bash
-curl http://localhost:3000/v1/service-requests/<serviceRequestId>
+curl http://localhost:3000/v1/service-requests/<serviceRequestId> \
+  -H "Authorization: Bearer <your_access_token>"
 ```
 
 #### Response
@@ -318,10 +375,11 @@ curl http://localhost:3000/v1/service-requests/<serviceRequestId>
 
 ## Technicians
 
-### Create Technician
+### Create Technician (Guarded)
 
 ```bash
 curl -X POST http://localhost:3000/v1/technicians \
+  -H "Authorization: Bearer <your_access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "company_id": "Company ID (UUID)",
@@ -345,10 +403,11 @@ curl -X POST http://localhost:3000/v1/technicians \
 }
 ```
 
-### List All Technicians
+### List All Technicians (Guarded)
 
 ```bash
-curl http://localhost:3000/v1/technicians
+curl http://localhost:3000/v1/technicians \
+  -H "Authorization: Bearer <your_access_token>"
 ```
 
 #### Response
@@ -367,10 +426,11 @@ curl http://localhost:3000/v1/technicians
 ]
 ```
 
-### Get Technicians by Company
+### Get Technicians by Company (Guarded)
 
 ```bash
-curl http://localhost:3000/v1/technicians/company/<company_id>
+curl http://localhost:3000/v1/technicians/company/<company_id> \
+  -H "Authorization: Bearer <your_access_token>"
 ```
 
 #### Response
@@ -390,10 +450,11 @@ curl http://localhost:3000/v1/technicians/company/<company_id>
 ]
 ```
 
-### Get Service Requests by Technician
+### Get Service Requests by Technician (Guarded)
 
 ```bash
-curl http://localhost:3000/v1/technicians/<technician_id>/service-requests
+curl http://localhost:3000/v1/technicians/<technician_id>/service-requests \
+  -H "Authorization: Bearer <your_access_token>"
 ```
 
 #### Response
@@ -403,12 +464,11 @@ Same format as [List Service Requests](#list-service-requests-with-filters--curs
 
 ## Service Request Management
 
-### Update Service Request
-
-Update one or more fields of a service request. All fields are optional.
+### Update Service Request (Guarded)
 
 ```bash
 curl -X PATCH http://localhost:3000/v1/service-requests/<serviceRequestId> \
+  -H "Authorization: Bearer <your_access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "status": "ASSIGNED",
@@ -433,10 +493,11 @@ curl -X PATCH http://localhost:3000/v1/service-requests/<serviceRequestId> \
 }
 ```
 
-### Upload Client Media
+### Upload Client Media (Guarded)
 
 ```bash
 curl -X POST http://localhost:3000/v1/service-requests/<serviceRequestId>/client-media \
+  -H "Authorization: Bearer <your_access_token>" \
   -H "Content-Type: multipart/form-data" \
   -F "files=@/path/to/image.jpg"
 ```
@@ -452,10 +513,11 @@ curl -X POST http://localhost:3000/v1/service-requests/<serviceRequestId>/client
 ]
 ```
 
-### Upload Technician Media
+### Upload Technician Media (Guarded)
 
 ```bash
 curl -X POST http://localhost:3000/v1/service-requests/<serviceRequestId>/technician-media \
+  -H "Authorization: Bearer <your_access_token>" \
   -H "Content-Type: multipart/form-data" \
   -F "files=@/path/to/image.jpg"
 ```
@@ -471,16 +533,63 @@ curl -X POST http://localhost:3000/v1/service-requests/<serviceRequestId>/techni
 ]
 ```
 
-### Filter Service Requests by Technician
+### Filter Service Requests by Technician (Guarded)
 
 ```bash
 # Get all service requests assigned to a specific technician
-curl "http://localhost:3000/v1/service-requests?technicianId=<technician_id>"
+curl "http://localhost:3000/v1/service-requests?technicianId=<technician_id>" \
+  -H "Authorization: Bearer <your_access_token>"
 
 # Combine with status filter
-curl "http://localhost:3000/v1/service-requests?technicianId=<technician_id>&status=IN_PROGRESS"
+curl "http://localhost:3000/v1/service-requests?technicianId=<technician_id>&status=IN_PROGRESS" \
+  -H "Authorization: Bearer <your_access_token>"
 ```
 
 #### Response
 
 Same format as [List Service Requests](#list-service-requests-with-filters--cursor-pagination)
+ 
+ 
+ ## Realtime Updates
+ 
+ The system provides realtime updates for service requests using Server-Sent Events (SSE).
+ 
+ ### SSE Stream (Guarded)
+ 
+ This endpoint provides a continuous stream of events for the operator's company.
+ 
+ ```bash
+ curl -N --no-buffer http://localhost:3000/v1/realtime/stream \
+   -H "Authorization: Bearer <your_access_token>"
+ ```
+ 
+ #### Event Format
+ 
+ The stream sends `MessageEvent` objects. Each event has a `data` field containing the update.
+ 
+ ```json
+ {
+   "data": {
+     "id": "Service Request ID (UUID)",
+     "status": "ASSIGNED",
+     "updated_at": "Date (ISO 8601)",
+     ...
+   }
+ }
+ ```
+ 
+ ### WebSockets (Socket.IO)
+ 
+ For interactive applications or node-based testing, WebSockets are available via Socket.IO.
+ 
+ You can use the provided test client to see events as they happen:
+ 
+ ```bash
+ # Usage: node test-websocket.js <company_id>
+ node test-websocket.js 123e4567-e89b-12d3-a456-426614174000
+ ```
+ 
+ **WebSocket Server**: `http://localhost:3000`
+ **Events**:
+ - `joinRoom`: Emit this with `company:<company_id>` to join a company-specific room.
+ - `service-request.updated`: Listen for this event to receive updates.

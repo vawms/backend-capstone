@@ -13,6 +13,7 @@ import { CompanyModule } from './modules/companies/company.module';
 import { TechnicianModule } from './modules/technicians/technician.module';
 import { EventsModule } from './events/events.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -27,6 +28,11 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         url: configService.databaseUrl,
+        host: configService.dbHost,
+        port: configService.dbPort,
+        username: configService.dbUsername,
+        password: configService.dbPassword,
+        database: configService.dbDatabase,
         autoLoadEntities: true,
         synchronize: false, // Use migrations instead
       }),
@@ -40,6 +46,7 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
     TechnicianModule,
     EventsModule,
     RealtimeModule,
+    AuthModule,
   ],
 })
 export class AppModule {}

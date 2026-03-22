@@ -4,7 +4,7 @@ import {
   Post,
   Body,
   Param,
-  // UseGuards,
+  UseGuards,
   Request,
   Query,
   ValidationPipe,
@@ -13,12 +13,13 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { TechnicianService } from '../services/technician.service';
-// import { Technician } from '../../entities/technician.entity';
 import { ServiceRequestService } from '../../service-request/services/service-request.service';
 import { ListServiceRequestsQuery } from '../../service-request/dto/list-service-requests.query';
 import { ListServiceRequestsResponseDto } from '../../service-request/dto/list-service-requests-response.dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 @Controller('v1/technicians')
+@UseGuards(JwtAuthGuard)
 export class TechnicianController {
   constructor(
     private readonly technicianService: TechnicianService,

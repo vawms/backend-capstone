@@ -8,13 +8,19 @@ import {
   HttpStatus,
   ValidationPipe,
   ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { AssetService } from '../services/asset.service';
 import { CreateAssetDto } from '../dto/create-asset.dto';
 import { AssetResponseDto } from '../dto/asset-response.dto';
 import { PublicAssetDto } from '../dto/public-asset.dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { UserRole } from '../../../entities/user.entity';
 
 @Controller('v1/assets')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class AssetController {
   constructor(private readonly assetService: AssetService) {}
 
@@ -23,6 +29,7 @@ export class AssetController {
    * Create a new asset with auto-generated QR token
    */
   @Post()
+  @Roles(UserRole.OPERATOR)
   @HttpCode(HttpStatus.CREATED)
   async createAsset(
     @Body(ValidationPipe) dto: CreateAssetDto,

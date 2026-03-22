@@ -11,9 +11,29 @@ import {
 // Defines shape of config
 // Decorators (@) are ways to attach metadata to a property
 export class ConfigSchema {
+  @IsOptional()
+  @IsString()
+  DATABASE_URL?: string;
+
   @IsNotEmpty()
   @IsString()
-  DATABASE_URL!: string;
+  DB_HOST: string = 'localhost';
+
+  @IsNotEmpty()
+  @IsNumber()
+  DB_PORT: number = 5432;
+
+  @IsNotEmpty()
+  @IsString()
+  DB_USERNAME: string = 'postgres';
+
+  @IsNotEmpty()
+  @IsString()
+  DB_PASSWORD: string = 'postgres';
+
+  @IsNotEmpty()
+  @IsString()
+  DB_DATABASE: string = 'smart_service';
 
   @IsNotEmpty()
   @IsNumber()
@@ -58,6 +78,10 @@ export class ConfigSchema {
   @IsOptional()
   @IsString()
   SMTP_FROM?: string;
+
+  @IsOptional()
+  @IsString()
+  JWT_SECRET: string = 'super-secret';
 }
 
 // Takes raw environment variables and converts them into appropriate types and checks with decorators

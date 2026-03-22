@@ -1,14 +1,16 @@
-import { Controller, Get, Sse, MessageEvent, Query } from '@nestjs/common';
+import { Controller, Get, Sse, MessageEvent, UseGuards, Request } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { SseService } from './sse.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('v1/realtime')
+@UseGuards(JwtAuthGuard)
 export class RealtimeController {
   constructor(private readonly sseService: SseService) {}
 
   @Sse('stream')
-  stream(@Query('companyId') companyId: string): Observable<MessageEvent> {
-    // In a real app, companyId would come from the authenticated user
+  stream(@Request() req: any): Observable<MessageEvent> {
+    const companyId = req.user.companyId;
     return this.sseService.stream(companyId);
   }
 }
