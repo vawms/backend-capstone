@@ -2,6 +2,7 @@ services:
   postgres:
     image: postgres:18-alpine
     container_name: postgres_capstone
+    profiles: ["dev", "qa"]
     restart: always
     environment:
       POSTGRES_USER: postgres
@@ -11,6 +12,34 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: backend_capstone
+    profiles: ["qa"]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: smart_service
+      PORT: 3000
+      NODE_ENV: production
+      JWT_SECRET: ${JWT_SECRET:-super-secret}
+      RUN_SEED: ${RUN_SEED:-false}
+    ports:
+      - "3000:3000"
 
   # minio:
   #   image: minio/minio:latest

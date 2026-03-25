@@ -28,13 +28,14 @@ async function seed() {
 
   // 1. Clear existing data (optional but recommended for a clean test state)
   // Note: Order matters due to foreign keys
+  // Uses query builder because .delete({}) rejects empty criteria in newer TypeORM
   console.log('Clearing existing data...');
-  await serviceRequestRepo.delete({});
-  await userRepo.delete({});
-  await technicianRepo.delete({});
-  await clientRepo.delete({});
-  await assetRepo.delete({});
-  await companyRepo.delete({});
+  await serviceRequestRepo.createQueryBuilder().delete().execute();
+  await userRepo.createQueryBuilder().delete().execute();
+  await technicianRepo.createQueryBuilder().delete().execute();
+  await clientRepo.createQueryBuilder().delete().execute();
+  await assetRepo.createQueryBuilder().delete().execute();
+  await companyRepo.createQueryBuilder().delete().execute();
 
   // 2. Create Company
   const company = companyRepo.create({

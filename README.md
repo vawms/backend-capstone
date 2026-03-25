@@ -1,34 +1,122 @@
 # Backend Capstone: Dev and Docker
 
 ## TODO
-When a technician does not finish a job or further work needs to be done he can open a new issue to come back later. 
+When a technician does not finish a job or further work needs to be done he can open a new issue to come back later.
 The technician should be able to access previous jobs done at that site to determine its history.
 
-This is the top-level entry for running the backend using Docker and/or a Dev Container. For API usage, scripts, and detailed developer workflows, see the README inside ./backend.
+## What's Included
 
-## What’s Included
-
-- NestJS backend in ./backend
+- NestJS backend in `./backend`
 - PostgreSQL (via Docker Compose)
 - Real-time updates via SSE (Server-Sent Events)
 - Technician management and workflows
 - Media upload (local storage)
-- Optional MinIO service (planned/optional)
+- JWT authentication (operator and technician roles)
+- Optional MinIO and Redis services (planned)
 - Dev Container configuration for VS Code
 
 ## Prerequisites
 
 - Docker Desktop or Docker Engine
 - Docker Compose v2
-- VS Code with “Dev Containers” & "Container Tools" extensions
+- (Development only) VS Code with the "Dev Containers" extension
 
-## Quick Start with Docker Compose
+## Docker Compose Profiles
 
-1. Copy or export environment variables used by the backend. The backend service expects at least DATABASE_URL and PORT. The compose file typically sets these for you via env or defaults.
+The project uses **Docker Compose profiles** to support two workflows:
 
-Example .env at repo (/backend-capstone) root & /backend-capstone/backend for good measure:
+| Profile | What starts | Use case |
+|---------|-------------|----------|
+| `dev`   | PostgreSQL only | Day-to-day development inside a VS Code Dev Container |
+| `qa`    | PostgreSQL + Backend (containerized) | QA testing, demos, CI — fully automated startup |
+
+## Quick Start: Development
+
+Run the helper script from the project root:
+
+```bash
+./scripts/dev.sh
+```
+
+This will:
+1. Copy `.env.example` to `.env` if no `.env` exists
+2. Start PostgreSQL on `localhost:5432`
+
+Then open the project in VS Code and reopen inside the Dev Container (`Ctrl+Shift+P` → *Dev Containers: Reopen in Container*). Inside the Dev Container terminal:
+
+```bash
+cd backend
+npm run migration:run
+npm run seed              # optional — loads sample data
+npm run start:dev
+```
+
+Verify:
+
+```bash
+curl http://localhost:3000/health
+# → { "ok": true, "db": "up", ... }
+```
+
+## Quick Start: QA / Testing
+
+Run the helper script from the project root:
+
+```bash
+./scripts/qa.sh
+```
+
+This will:
+1. Copy `.env.example` to `.env` if no `.env` exists
+2. Build the backend Docker image
+3. Start PostgreSQL and wait for it to be healthy
+4. Run database migrations automatically
+5. Seed sample data (set `RUN_SEED=false` to skip)
+6. Start the NestJS API on `localhost:3000`
+
+To skip seeding:
+
+```bash
+RUN_SEED=false ./scripts/qa.sh
+```
+
+View backend logs:
+
+```bash
+cd infra && docker compose --profile qa logs -f backend
+```
+
+Verify:
+
+```bash
+curl http://localhost:3000/health
+```
+
+### QA Seed Credentials
+
+| Role       | Username / Email       | Password    |
+|------------|------------------------|-------------|
+| Operator   | `operator`             | `operator123` |
+| Technician | `sarah.m@techcorp.com` | `tech123`   |
+| Technician | `james.t@techcorp.com` | `tech123`   |
+| Technician | `emily.c@techcorp.com` | `tech123`   |
+
+## Stopping Services
+
+```bash
+# Stop all containers (preserves database data)
+./scripts/stop.sh
+
+# Stop all containers AND delete database volumes
+./scripts/stop.sh --clean
+```
+
+## Environment Variables
+
+Copy `.env.example` to `.env` at the project root (and optionally into `./backend/.env`). Key variables:
 
 ```text
+# PostgreSQL container
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 POSTGRES_DB=smart_service
@@ -36,107 +124,54 @@ POSTGRES_PORT=5432
 
 # Backend app
 PORT=3000
-DATABASE_URL=postgres://postgres:postgres@db:5432/smart_service
+DATABASE_URL=postgres://postgres:postgres@postgres:5432/smart_service
+DB_HOST=postgres
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DB_DATABASE=smart_service
 NODE_ENV=development
+JWT_SECRET=super-secret
+
+# QA only
+RUN_SEED=false
 ```
 
-2. Start the stack:
+> Inside Docker Compose the PostgreSQL hostname is `postgres` (the service name). The Dev Container joins the same Docker network (`infra_default`), so the same hostname works there too.
 
-```bash
-cd infra
-docker compose up --build
-```
+## Networking
 
-This brings up:
-
-- db: PostgreSQL
-
-Then open up VS Code and start the Dev Container and run this inside a VS Code terminal:
-```bash
-npm ci
-npm install
-```
-
-
-3. Apply migrations:
-
-```bash
-npm run migration:run
-```
-
-4. Run the application:
-
-```bash
-npm run start:dev
-```
-
-5. Health check:
-
-```bash
-curl http://localhost:3000/health
-```
-
-You should see db: "up".
-
-6. Optional: seed data (Fill up the database with some data for testing)
-
-```bash
-npm run seed
-```
-
-### Common Docker Commands
-
-```bash
-# Start docker compose
-docker compose up --build
-
-# Stop
-docker compose down
-
-# Clean volumes (removes database data)
-docker compose down -v
-```
-
-## Networking and Environment
-
-- The backend uses DATABASE_URL. In Docker, use the service name of Postgres (commonly db) as host: `postgres://user:pass@db:5432/smart_service`.
+- The Docker Compose default network is `infra_default`
+- The Dev Container joins this network via `--network=infra_default` (configured in `.devcontainer/devcontainer.json`)
 - Exposed ports:
-  - API: 3000 → localhost:3000
-  - Postgres: 5432 → postgres:5432 
+  - **API**: `3000` → `localhost:3000`
+  - **PostgreSQL**: `5432` → `localhost:5432`
 
+## API and Developer Documentation
 
-## Where to Find API and NPM Instructions
+For detailed endpoint descriptions, DTO rules, npm scripts, migrations, seeding, and SSE real-time events:
 
-For detailed npm scripts, migrations, seeding, endpoint descriptions, DTO rules, and troubleshooting:
-
-- See ./backend/README.md
-
-This includes:
-
-- How to run the NestJS app locally without Docker
-- Healthcheck endpoint
-- Companies, Assets, Public Intake, and Service Requests endpoints
-- Pagination and rate-limiting details
+→ See [`./backend/README.md`](./backend/README.md)
 
 ## Troubleshooting
 
-- api container fails to connect to db:
+- **Backend cannot connect to the database**
+  - Ensure `DB_HOST` / `DATABASE_URL` uses `postgres` (the Compose service name), not `localhost`
+  - Check Postgres logs: `cd infra && docker compose --profile dev logs -f postgres`
 
-  - Ensure DATABASE_URL uses host db (the Compose service name), not localhost.
-  - Verify db logs: `docker compose logs -f db`
-
-- Migrations fail inside container:
-
+- **Migrations fail**
   - Run them explicitly: `npm run migration:run`
-  - Ensure your entities are included and paths match container filesystem
+  - Ensure the database is up and reachable
 
-- Port conflict on 3000/5432:
+- **Port conflict on 3000 or 5432**
+  - Change the published ports in `infra/docker-compose.yaml` or set `PORT` in `.env`
 
-  - Change published ports in docker-compose.yml or set PORT environment variable
+- **QA backend container exits immediately**
+  - Check logs: `cd infra && docker compose --profile qa logs backend`
+  - Common cause: Postgres not yet healthy — the entrypoint retries automatically
 
-- Data persistence:
-  - Compose uses a volume for Postgres data. Use `docker compose down -v` to reset.
+- **Data persistence**
+  - Docker Compose uses a named volume (`pgdata`) for Postgres. Use `./scripts/stop.sh --clean` to reset.
 
-## Other
-
-For development and API usage, continue in ./backend.
+- **429 Too Many Requests on public intake**
+  - The in-memory rate limiter allows 5 requests per asset per IP per hour. Restart the backend to reset.
