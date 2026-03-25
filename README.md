@@ -1,8 +1,23 @@
-# Backend Capstone: Dev and Docker
+# Smart Service — Field Service Management Backend
+
+## About
+
+Smart Service is a backend API for managing field service operations. It connects companies with their physical assets (servers, routers, HVAC units, etc.) and streamlines the workflow from service request intake through technician assignment and resolution.
+
+**How it works:** Each asset gets a unique QR code. When someone scans the QR code, they're taken to a public intake form where they can submit a service request describing the issue. Operators see incoming requests in real time via Server-Sent Events, assign technicians, schedule work, and track progress through a defined status lifecycle (Pending → Assigned → Scheduled → In Progress → Resolved → Closed).
+
+**Key capabilities:**
+- **QR-based intake** — Clients scan an asset's QR code and submit service requests without needing an account
+- **Multi-tenant** — All data is scoped by company
+- **Real-time updates** — SSE pushes status changes to operator dashboards and technician views instantly
+- **Technician management** — Create technicians, assign them to requests, track their workload
+- **Media attachments** — Both clients and technicians can upload photos/files to service requests
+- **JWT authentication** — Role-based access for operators and technicians
 
 ## TODO
-When a technician does not finish a job or further work needs to be done he can open a new issue to come back later.
-The technician should be able to access previous jobs done at that site to determine its history.
+
+- When a technician does not finish a job or further work needs to be done, they can open a new issue to come back later
+- The technician should be able to access previous jobs done at a site to determine its history
 
 ## What's Included
 
