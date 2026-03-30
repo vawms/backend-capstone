@@ -301,6 +301,14 @@ curl "http://localhost:3000/v1/service-requests?limit=10" \
 # Use cursor from previous response to fetch next page
 curl "http://localhost:3000/v1/service-requests?cursor=<nextCursor>&limit=10" \
   -H "Authorization: Bearer <your_access_token>"
+
+# Show only root requests (exclude follow-ups from the list)
+curl "http://localhost:3000/v1/service-requests?rootOnly=true" \
+  -H "Authorization: Bearer <your_access_token>"
+
+# Show only follow-ups of a specific service request
+curl "http://localhost:3000/v1/service-requests?parentId=<serviceRequestId>" \
+  -H "Authorization: Bearer <your_access_token>"
 ```
 
 #### Response
@@ -313,17 +321,28 @@ curl "http://localhost:3000/v1/service-requests?cursor=<nextCursor>&limit=10" \
       "created_at": "Date (ISO 8601)",
       "type": "MAINTENANCE",
       "status": "PENDING",
-      "descriptionPreview": "First ~100 chars...",
+      "description_preview": "First ~100 chars...",
       "asset": {
         "id": "Asset ID (UUID)",
         "name": "Asset Name",
-        "model": "Asset Model"
+        "model": "Asset Model",
+        "company_name": "Company Name",
+        "location_lng": -122.4194,
+        "location_lat": 37.7749,
+        "location_address": "Location Address",
+        "qr_token": "QR Token"
       },
       "client": {
         "id": "Client ID (UUID)",
         "name": "Client Name",
         "email": "client@example.com"
-      }
+      },
+      "technician": {
+        "id": "Technician ID (UUID)",
+        "name": "Technician Name"
+      },
+      "parent_id": "Parent SR ID (UUID) or absent if root",
+      "has_followups": true
     }
   ],
   "nextCursor": "Base64 cursor or null",
@@ -352,6 +371,10 @@ curl http://localhost:3000/v1/service-requests/<serviceRequestId> \
   "description": "Full description",
   "client_media": [{ "url": "https://example.com/photo.jpg", "kind": "image" }],
   "technician_media": [{ "url": "https://example.com/tech_photo.jpg", "kind": "image" }],
+  "scheduled_date": "2025-12-25T10:00:00Z",
+  "technician_notes": "Note content",
+  "parent_id": "Parent SR ID (UUID) or null",
+  "followup_reason": "Why the follow-up was created, or null",
   "asset": {
     "id": "Asset ID (UUID)",
     "name": "Asset Name",
@@ -359,7 +382,8 @@ curl http://localhost:3000/v1/service-requests/<serviceRequestId> \
     "serial_number": "Serial Number",
     "location_address": "Location Address",
     "location_lat": 37.7749,
-    "location_lng": -122.4194
+    "location_lng": -122.4194,
+    "company_name": "Company Name"
   },
   "client": {
     "id": "Client ID (UUID)",
@@ -367,11 +391,119 @@ curl http://localhost:3000/v1/service-requests/<serviceRequestId> \
     "email": "client@example.com",
     "phone": "+1-555-0123"
   },
-  "technician_id": "Technician ID (UUID)",
-  "technician_notes": "Note content",
-  "scheduled_date": "2025-12-25T10:00:00Z"
+  "technician": {
+    "id": "Technician ID (UUID)",
+    "name": "Technician Name",
+    "email": "tech@example.com"
+  }
 }
 ```
+
+## Follow-Ups and History Chain
+
+### Create Follow-Up Service Request (Guarded)
+
+Creates a new service request linked to an existing one. Only allowed when the parent SR is in `IN_PROGRESS` or `RESOLVED` status. Inherits company, asset, client, channel, and type from the parent.
+
+```bash
+curl -X POST http://localhost:3000/v1/service-requests/<serviceRequestId>/follow-up \
+  -H "Authorization: Bearer <your_access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "followup_reason": "Compressor belt showing early signs of wear during inspection.",
+    "description": "Follow-up visit: replace compressor belt before failure.",
+    "technician_id": "Technician ID (UUID, optional - inherits from parent if omitted)",
+    "scheduled_date": "2026-04-15T10:00:00Z"
+  }'
+```
+
+#### Response (201 Created)
+
+```json
+{
+  "id": "New Follow-Up SR ID (UUID)",
+  "company_id": "Company ID (UUID)",
+  "asset_id": "Asset ID (UUID)",
+  "client_id": "Client ID (UUID)",
+  "channel": "MANUAL",
+  "type": "MAINTENANCE",
+  "description": "Follow-up visit: replace compressor belt before failure.",
+  "followup_reason": "Compressor belt showing early signs of wear during inspection.",
+  "parent_id": "Parent SR ID (UUID)",
+  "status": "ASSIGNED",
+  "technician_id": "Technician ID (UUID)",
+  "scheduled_date": "2026-04-15T10:00:00.000Z",
+  "created_at": "Date (ISO 8601)",
+  "updated_at": "Date (ISO 8601)"
+}
+```
+
+#### Error Responses
+
+- `400 Bad Request` — Parent SR is not in `IN_PROGRESS` or `RESOLVED` status
+- `404 Not Found` — Parent SR does not exist or belongs to a different company
+
+### Get History Chain (Guarded)
+
+Returns the full chain of related service requests (original + all follow-ups), ordered from oldest to newest. You can call this on any SR in the chain and it will walk up to the root automatically.
+
+```bash
+curl http://localhost:3000/v1/service-requests/<serviceRequestId>/chain \
+  -H "Authorization: Bearer <your_access_token>"
+```
+
+#### Response
+
+```json
+{
+  "original_id": "Root SR ID (UUID)",
+  "total": 3,
+  "chain": [
+    {
+      "id": "Root SR ID (UUID)",
+      "status": "RESOLVED",
+      "description_preview": "Annual inspection for A/C unit.",
+      "created_at": "Date (ISO 8601)",
+      "scheduled_date": "2026-03-01T10:00:00Z",
+      "technician": { "id": "Tech ID", "name": "James Thompson" }
+    },
+    {
+      "id": "Follow-Up #1 ID (UUID)",
+      "status": "ASSIGNED",
+      "description_preview": "Follow-up visit: replace compressor belt...",
+      "created_at": "Date (ISO 8601)",
+      "followup_reason": "Compressor belt showing early signs of wear.",
+      "technician": { "id": "Tech ID", "name": "James Thompson" }
+    },
+    {
+      "id": "Follow-Up #2 ID (UUID)",
+      "status": "PENDING",
+      "description_preview": "Final quality check after belt replacement...",
+      "created_at": "Date (ISO 8601)",
+      "followup_reason": "Post-replacement verification needed."
+    }
+  ]
+}
+```
+
+## Rescheduling
+
+Rescheduling uses the existing PATCH endpoint. Changing `scheduled_date` on a service request that is not yet RESOLVED or CLOSED will emit a `service_request.rescheduled` event and send a rescheduling-specific email to the client.
+
+### Reschedule a Service Request (Guarded)
+
+```bash
+curl -X PATCH http://localhost:3000/v1/service-requests/<serviceRequestId> \
+  -H "Authorization: Bearer <your_access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "scheduled_date": "2026-04-20T14:00:00Z"
+  }'
+```
+
+#### Error Responses
+
+- `400 Bad Request` — Cannot reschedule a service request that is already RESOLVED or CLOSED
 
 ## Technicians
 
@@ -593,3 +725,13 @@ Same format as [List Service Requests](#list-service-requests-with-filters--curs
  **Events**:
  - `joinRoom`: Emit this with `company:<company_id>` to join a company-specific room.
  - `service-request.updated`: Listen for this event to receive updates.
+
+ **Event types in the `data.type` field**:
+
+ | Type | Trigger |
+ |------|---------|
+ | `UPDATED` | Generic update (status change, notes, technician assignment) |
+ | `RESCHEDULED` | `scheduled_date` was changed on an existing SR |
+ | `FOLLOW_UP_CREATED` | A new follow-up SR was created (includes `parentId` in data) |
+ | `CLIENT_MEDIA_ADDED` | Client media files were uploaded |
+ | `TECHNICIAN_MEDIA_ADDED` | Technician media files were uploaded |

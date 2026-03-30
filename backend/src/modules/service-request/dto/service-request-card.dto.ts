@@ -54,4 +54,6 @@ export class ServiceRequestCardDto {
   technician?: TechnicianSummaryDto;
   technician_notes?: string;
   scheduled_date?: Date;
+  parent_id?: string;
+  has_followups?: boolean;
 }

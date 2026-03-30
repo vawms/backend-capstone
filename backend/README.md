@@ -76,7 +76,7 @@ npm run migration:revert
 # Generate a new migration from entity changes
 npm run migration:generate
 
-# Seed sample data (1 company, 3 assets, 3 technicians, 3 service requests)
+# Seed sample data (1 company, 3 assets, 3 technicians, 3 service requests + 1 follow-up)
 npm run seed
 
 # Run unit tests
@@ -146,11 +146,22 @@ Note: Public endpoints intentionally return limited fields.
     - In-memory rate limit per token+IP per hour
 
 - **Operator: Service Requests**
-  - `GET /v1/service-requests?status=&from=&to=&cursor=&limit=`
+  - `GET /v1/service-requests?status=&from=&to=&cursor=&limit=&parentId=&rootOnly=`
     - Cursor-based pagination (createdAt desc, then id desc)
-    - Returns minimal cards
-  - `GET /v1/service-requests/:id` (full details including media)
+    - Returns minimal cards with `parent_id` and `has_followups` fields
+    - `parentId` — show only follow-ups of a given SR
+    - `rootOnly=true` — show only original (root) requests, excluding follow-ups
+  - `GET /v1/service-requests/:id` (full details including media, follow-up fields)
   - `PATCH /v1/service-requests/:id` (update status, assign tech, notes, scheduled date)
+    - Rescheduling: changing `scheduled_date` is blocked on RESOLVED/CLOSED SRs and emits a `service_request.rescheduled` event
+  - `POST /v1/service-requests/:id/follow-up` (create a follow-up/continuation SR)
+    - Body: `{ followup_reason, description, technician_id?, scheduled_date? }`
+    - Only allowed when parent is IN_PROGRESS or RESOLVED
+    - Inherits company, asset, client, channel, and type from parent
+    - Auto-assigns ASSIGNED status if a technician is set
+  - `GET /v1/service-requests/:id/chain` (get the full history chain)
+    - Walks up to the root and returns all related SRs ordered oldest → newest
+    - Response: `{ original_id, total, chain: [...] }`
   - `POST /v1/service-requests/:id/client-media` (upload media for client)
   - `POST /v1/service-requests/:id/technician-media` (upload media for technician)
 
@@ -211,7 +222,9 @@ eventSource.onmessage = (event) => {
 
 | Event Type | Description | Data Structure |
 |------------|-------------|----------------|
-| `service-request.updated` | Emitted when a service request is created or updated | `{ id, status, technician_id?, updated_at }` |
+| `service_request.updated` | Emitted when a service request is updated | `{ id, status, technicianId?, scheduledDate?, updatedAt }` |
+| `service_request.rescheduled` | Emitted when `scheduled_date` changes | `{ id, status, technicianId?, scheduledDate, previousDate, updatedAt }` |
+| `service_request.followup_created` | Emitted when a follow-up SR is created | `{ id, parentId, status, createdAt }` |
 
 ### Closing Connection
 

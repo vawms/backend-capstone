@@ -3,6 +3,7 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
   JoinColumn,
@@ -115,4 +116,22 @@ export class ServiceRequest {
   })
   @JoinColumn({ name: 'technician_id' })
   technician!: Technician;
+
+  // ── Follow-up / continuation chain ──
+
+  @Column('uuid', { nullable: true })
+  parent_id!: string | null;
+
+  @Column('text', { nullable: true })
+  followup_reason!: string | null;
+
+  @ManyToOne(() => ServiceRequest, (sr) => sr.followups, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
+  @JoinColumn({ name: 'parent_id' })
+  parent!: ServiceRequest | null;
+
+  @OneToMany(() => ServiceRequest, (sr) => sr.parent)
+  followups!: ServiceRequest[];
 }

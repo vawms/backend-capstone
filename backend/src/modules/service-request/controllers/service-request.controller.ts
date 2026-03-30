@@ -8,6 +8,7 @@ import {
   Body,
   Param,
   Query,
+  Req,
   HttpCode,
   HttpStatus,
   ValidationPipe,
@@ -22,6 +23,7 @@ import { ServiceRequestService } from '../services/service-request.service';
 import { ListServiceRequestsQuery } from '../dto/list-service-requests.query';
 import { ListServiceRequestsResponseDto } from '../dto/list-service-requests-response.dto';
 import { UpdateServiceRequestDto } from '../dto/update-service-request.dto';
+import { CreateFollowUpDto } from '../dto/create-follow-up.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 @Controller('v1/service-requests')
@@ -115,6 +117,39 @@ export class ServiceRequestController {
   }
 
   /**
+   * POST /v1/service-requests/:id/follow-up
+   *
+   * Create a follow-up service request linked to an existing one.
+   * Only allowed when the parent SR is IN_PROGRESS or RESOLVED.
+   */
+  @Post(':id/follow-up')
+  @HttpCode(HttpStatus.CREATED)
+  async createFollowUp(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body(ValidationPipe) dto: CreateFollowUpDto,
+    @Req() req: any,
+  ) {
+    return this.serviceRequestService.createFollowUp(id, dto, {
+      companyId: req.user.companyId,
+    });
+  }
+
+  /**
+   * GET /v1/service-requests/:id/chain
+   *
+   * Get the full history chain of related service requests.
+   * Walks up to the root and returns all items ordered oldest → newest.
+   */
+  @Get(':id/chain')
+  @HttpCode(HttpStatus.OK)
+  async getChain(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Req() req: any,
+  ) {
+    return this.serviceRequestService.getChain(id, req.user.companyId);
+  }
+
+  /**
    * GET /v1/service-requests/:id
    *
    * Get full details of a service request
@@ -134,6 +169,10 @@ export class ServiceRequestController {
       description: sr.description,
       client_media: sr.client_media,
       technician_media: sr.technician_media,
+      scheduled_date: sr.scheduled_date,
+      technician_notes: sr.technician_notes,
+      parent_id: sr.parent_id,
+      followup_reason: sr.followup_reason,
       asset: {
         id: sr.asset.id,
         name: sr.asset.name,
@@ -144,12 +183,21 @@ export class ServiceRequestController {
         location_lng: sr.asset.location_lng,
         company_name: sr.asset.company.name,
       },
-      client: {
-        id: sr.client.id,
-        name: sr.client.name,
-        email: sr.client.email,
-        phone: sr.client.phone,
-      },
+      client: sr.client
+        ? {
+            id: sr.client.id,
+            name: sr.client.name,
+            email: sr.client.email,
+            phone: sr.client.phone,
+          }
+        : null,
+      technician: sr.technician
+        ? {
+            id: sr.technician.id,
+            name: sr.technician.name,
+            email: sr.technician.email,
+          }
+        : null,
     };
   }
 }

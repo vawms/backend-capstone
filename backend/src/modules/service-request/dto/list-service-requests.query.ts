@@ -4,9 +4,10 @@ import {
   IsISO8601,
   IsString,
   IsNumber,
+  IsUUID,
+  IsBooleanString,
   Min,
   Max,
-  // IsArray,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ServiceRequestStatus } from '../../../entities/service-request.entity';
@@ -67,4 +68,18 @@ export class ListServiceRequestsQuery {
   @IsOptional()
   @IsString()
   technicianId?: string;
+
+  /**
+   * Filter to show only follow-ups of a given service request
+   */
+  @IsOptional()
+  @IsUUID()
+  parentId?: string;
+
+  /**
+   * Set to "true" to show only root service requests (no parent)
+   */
+  @IsOptional()
+  @IsBooleanString()
+  rootOnly?: string;
 }

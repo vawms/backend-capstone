@@ -170,6 +170,24 @@ async function seed() {
   await serviceRequestRepo.save(requests);
   console.log(`✓ Created ${requests.length} service requests`);
 
+  // 8. Create a follow-up for the resolved A/C inspection (demonstrates the chain feature)
+  const followUp = serviceRequestRepo.create({
+    company_id: company.id,
+    asset_id: asset3.id,
+    client_id: client.id,
+    channel: ServiceRequestChannel.MANUAL,
+    type: ServiceRequestType.MAINTENANCE,
+    description:
+      'Follow-up visit: compressor belt shows early wear. Scheduling replacement before failure.',
+    followup_reason:
+      'Compressor belt showing early signs of wear during annual inspection.',
+    parent_id: requests[2].id,
+    status: ServiceRequestStatus.ASSIGNED,
+    technician_id: technicians[1].id,
+  });
+  await serviceRequestRepo.save(followUp);
+  console.log(`✓ Created follow-up service request (parent: ${requests[2].id})`);
+
   console.log('\n--- ✅ Seeding complete! ---');
   console.log(`Company ID: ${company.id}`);
   console.log(`Operator Login: operator / operator123`);

@@ -96,6 +96,59 @@ export class MailService implements OnModuleInit {
     await this.sendMail(to, subject, html);
   }
 
+  async sendFollowUpCreated(
+    to: string,
+    followUp: ServiceRequest,
+    parentSr: ServiceRequest,
+  ) {
+    if (!this.transporter) {
+      this.logger.warn('Transporter not initialized. Cannot send email.');
+      return;
+    }
+
+    const subject = `Follow-Up Service Request Created - #${followUp.id}`;
+    const html = `
+      <h2>Follow-Up Service Request Created</h2>
+      <p>A follow-up visit has been scheduled based on your previous service request <strong>#${parentSr.id}</strong>.</p>
+      <ul>
+        <li><strong>New Request ID:</strong> #${followUp.id}</li>
+        <li><strong>Reason:</strong> ${followUp.followup_reason || 'N/A'}</li>
+        <li><strong>Description:</strong> ${followUp.description}</li>
+        <li><strong>Status:</strong> ${followUp.status}</li>
+        ${followUp.scheduled_date ? `<li><strong>Scheduled Date:</strong> ${followUp.scheduled_date.toString()}</li>` : ''}
+      </ul>
+      <p>We will keep you updated on the progress.</p>
+    `;
+
+    await this.sendMail(to, subject, html);
+  }
+
+  async sendServiceRequestRescheduled(
+    to: string,
+    serviceRequest: ServiceRequest,
+    previousDate: Date | null,
+  ) {
+    if (!this.transporter) {
+      this.logger.warn('Transporter not initialized. Cannot send email.');
+      return;
+    }
+
+    const subject = `Service Request Rescheduled - #${serviceRequest.id}`;
+    const html = `
+      <h2>Service Request Rescheduled</h2>
+      <p>Your service request <strong>#${serviceRequest.id}</strong> has been rescheduled.</p>
+      <ul>
+        <li><strong>Previous Date:</strong> ${previousDate ? previousDate.toString() : 'Not previously scheduled'}</li>
+        <li><strong>New Date:</strong> ${serviceRequest.scheduled_date ? serviceRequest.scheduled_date.toString() : 'To be determined'}</li>
+        <li><strong>Status:</strong> ${serviceRequest.status}</li>
+        ${serviceRequest.technician ? `<li><strong>Technician:</strong> ${serviceRequest.technician.name}</li>` : ''}
+      </ul>
+      <p>Please check the portal for more details.</p>
+    `;
+
+    await this.sendMail(to, subject, html);
+  }
+
   private async sendMail(to: string, subject: string, html: string) {
     try {
       const from =
