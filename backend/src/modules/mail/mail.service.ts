@@ -58,6 +58,9 @@ export class MailService implements OnModuleInit {
     }
 
     const subject = `Service Request Update - #${serviceRequest.id}`;
+    const ratingLink = serviceRequest.rating_token
+      ? `<p><a href="${this.configService.appBaseUrl}/rate/${serviceRequest.rating_token}">Rate this service</a></p>`
+      : '';
     const html = `
       <h2>Service Request Updated</h2>
       <p>Your service request <strong>#${serviceRequest.id}</strong> has been updated.</p>
@@ -69,6 +72,26 @@ export class MailService implements OnModuleInit {
         ${serviceRequest.technician_notes ? `<li><strong>Notes:</strong> ${serviceRequest.technician_notes}</li>` : ''}
       </ul>
       <p>Please check the portal for more details.</p>
+      ${ratingLink}
+    `;
+
+    await this.sendMail(to, subject, html);
+  }
+
+  async sendRatingConfirmation(to: string, serviceRequest: ServiceRequest) {
+    if (!this.transporter) {
+      this.logger.warn('Transporter not initialized. Cannot send email.');
+      return;
+    }
+
+    const subject = `Thank you for your feedback - #${serviceRequest.id}`;
+    const stars = '★'.repeat(serviceRequest.rating_score ?? 0) + '☆'.repeat(5 - (serviceRequest.rating_score ?? 0));
+    const html = `
+      <h2>Thank You for Your Feedback!</h2>
+      <p>We have received your rating for service request <strong>#${serviceRequest.id}</strong>.</p>
+      <p><strong>Your rating:</strong> ${stars} (${serviceRequest.rating_score}/5)</p>
+      ${serviceRequest.rating_comment ? `<p><strong>Your comment:</strong> ${serviceRequest.rating_comment}</p>` : ''}
+      <p>We appreciate your feedback and will use it to improve our service.</p>
     `;
 
     await this.sendMail(to, subject, html);

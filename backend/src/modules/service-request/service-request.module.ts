@@ -6,6 +6,7 @@ import { ServiceRequestController } from './controllers/service-request.controll
 import { EventsModule } from '../../events/events.module';
 import { TechnicianModule } from '../technicians/technician.module';
 import { MailModule } from '../mail/mail.module';
+import { QrTokenGenerator } from '../../common/utils/qr-token.generator';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { MailModule } from '../mail/mail.module';
     MailModule,
   ],
   controllers: [ServiceRequestController],
-  providers: [ServiceRequestService],
+  providers: [ServiceRequestService, QrTokenGenerator],
   exports: [ServiceRequestService],
 })
 export class ServiceRequestModule {}

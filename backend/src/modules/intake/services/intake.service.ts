@@ -1,7 +1,7 @@
 import {
   Injectable,
-  // BadRequestException,
-  // NotFoundException,
+  BadRequestException,
+  NotFoundException,
   HttpStatus,
   HttpException,
 } from '@nestjs/common';
@@ -14,6 +14,7 @@ import {
 } from '../../../entities/service-request.entity';
 import { CreateIntakeRequestDto } from '../dto/create-intake-request.dto';
 import { IntakeResponseDto } from '../dto/intake-response.dto';
+import { SubmitRatingDto } from '../dto/submit-rating.dto';
 import { AssetService } from '../../assets/services/asset.service';
 import { ClientService } from '../../clients/services/client.service';
 import { RateLimiter } from '../../../common/utils/rate-limiter';
@@ -139,5 +140,92 @@ export class IntakeService {
       remaining,
       resetIn: '1 hour',
     };
+  }
+
+  /**
+   * Submit a client rating for a resolved/closed service request
+   */
+  async submitRating(
+    token: string,
+    dto: SubmitRatingDto,
+  ): Promise<{ message: string; rating_score: number }> {
+    const sr = await this.serviceRequestRepository.findOne({
+      where: { rating_token: token },
+      relations: ['client', 'asset', 'asset.company', 'technician'],
+    });
+
+    if (!sr) {
+      throw new NotFoundException('Rating link is invalid or has expired.');
+    }
+
+    const rateableStatuses = [
+      ServiceRequestStatus.RESOLVED,
+      ServiceRequestStatus.CLOSED,
+    ];
+    if (!rateableStatuses.includes(sr.status)) {
+      throw new BadRequestException(
+        'This service request cannot be rated yet.',
+      );
+    }
+
+    if (sr.rated_at !== null) {
+      throw new BadRequestException(
+        'This service request has already been rated.',
+      );
+    }
+
+    sr.rating_score = dto.score;
+    sr.rating_comment = dto.comment ?? null;
+    sr.rated_at = new Date();
+
+    await this.serviceRequestRepository.save(sr);
+
+    this.eventsGateway.emitServiceRequestUpdate(sr.company_id, {
+      type: 'RATED',
+      serviceRequestId: sr.id,
+      rating_score: dto.score,
+      ratedAt: sr.rated_at,
+    });
+
+    this.sseService.emit(sr.company_id, {
+      event: 'service_request.rated',
+      data: {
+        id: sr.id,
+        rating_score: dto.score,
+        ratedAt: sr.rated_at,
+      },
+    });
+
+    if (sr.client && sr.client.email) {
+      await this.mailService.sendRatingConfirmation(sr.client.email, sr);
+    }
+
+    return { message: 'Thank you for your feedback!', rating_score: dto.score };
+  }
+
+  /**
+   * Check if a rating token is eligible for rating
+   */
+  async getRatingEligibility(
+    token: string,
+  ): Promise<{ eligible: boolean; already_rated: boolean }> {
+    const sr = await this.serviceRequestRepository.findOne({
+      where: { rating_token: token },
+      select: ['id', 'status', 'rated_at'],
+    });
+
+    if (!sr) {
+      return { eligible: false, already_rated: false };
+    }
+
+    const rateableStatuses = [
+      ServiceRequestStatus.RESOLVED,
+      ServiceRequestStatus.CLOSED,
+    ];
+
+    const already_rated = sr.rated_at !== null;
+    const eligible = rateableStatuses.includes(sr.status) && !already_rated;
+
+    return { eligible, already_rated };
   }
 }

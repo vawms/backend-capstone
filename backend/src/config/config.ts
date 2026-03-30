@@ -82,6 +82,10 @@ export class ConfigSchema {
   @IsOptional()
   @IsString()
   JWT_SECRET: string = 'super-secret';
+
+  @IsOptional()
+  @IsString()
+  APP_BASE_URL: string = 'http://localhost:3000';
 }
 
 // Takes raw environment variables and converts them into appropriate types and checks with decorators

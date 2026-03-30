@@ -56,4 +56,5 @@ export class ServiceRequestCardDto {
   scheduled_date?: Date;
   parent_id?: string;
   has_followups?: boolean;
+  rating_score?: number;
 }

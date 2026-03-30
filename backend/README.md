@@ -32,6 +32,7 @@ The backend validates config at startup and will fail-fast if anything is invali
 | `PORT` | `3000` | API listen port |
 | `NODE_ENV` | `development` | Environment mode |
 | `JWT_SECRET` | `super-secret` | JWT signing secret |
+| `APP_BASE_URL` | `http://localhost:3000` | Base URL used in rating links sent to clients |
 
 Example `.env`:
 
@@ -145,6 +146,13 @@ Note: Public endpoints intentionally return limited fields.
     - Creates service request with `channel="QR"`, `status="PENDING"`
     - In-memory rate limit per token+IP per hour
 
+- **Public: Client Ratings**
+  - `GET /v1/public/intake/rate/:token` — check if a rating token is eligible (`{ eligible, already_rated }`)
+  - `POST /v1/public/intake/rate/:token` — submit a rating (`{ score: 1-5, comment? }`)
+    - Token is generated automatically when an SR transitions to RESOLVED or CLOSED
+    - Included in the status-update email sent to the client
+    - One-time use: returns 400 if already rated
+
 - **Operator: Service Requests**
   - `GET /v1/service-requests?status=&from=&to=&cursor=&limit=&parentId=&rootOnly=`
     - Cursor-based pagination (createdAt desc, then id desc)
@@ -225,6 +233,7 @@ eventSource.onmessage = (event) => {
 | `service_request.updated` | Emitted when a service request is updated | `{ id, status, technicianId?, scheduledDate?, updatedAt }` |
 | `service_request.rescheduled` | Emitted when `scheduled_date` changes | `{ id, status, technicianId?, scheduledDate, previousDate, updatedAt }` |
 | `service_request.followup_created` | Emitted when a follow-up SR is created | `{ id, parentId, status, createdAt }` |
+| `service_request.rated` | Emitted when a client submits a rating | `{ id, rating_score, ratedAt }` |
 
 ### Closing Connection
 

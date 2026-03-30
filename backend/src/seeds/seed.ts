@@ -153,6 +153,7 @@ async function seed() {
       status: ServiceRequestStatus.ASSIGNED,
       technician_id: technicians[0].id,
       technician_notes: 'Initial diagnosis suggests overheating.',
+      rating_token: qrGenerator.generateToken(),
     }),
     serviceRequestRepo.create({
       company_id: company.id,
@@ -164,6 +165,10 @@ async function seed() {
       status: ServiceRequestStatus.RESOLVED,
       technician_id: technicians[1].id,
       technician_notes: 'All filters replaced. System running efficiently.',
+      rating_score: 4,
+      rating_comment: 'Technician was thorough and professional.',
+      rated_at: new Date(),
+      rating_token: qrGenerator.generateToken(),
     }),
   ];
 

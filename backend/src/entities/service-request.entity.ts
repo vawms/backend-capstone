@@ -134,4 +134,18 @@ export class ServiceRequest {
 
   @OneToMany(() => ServiceRequest, (sr) => sr.parent)
   followups!: ServiceRequest[];
+
+  // ── Client rating ──
+
+  @Column('smallint', { nullable: true })
+  rating_score!: number | null;
+
+  @Column('text', { nullable: true })
+  rating_comment!: string | null;
+
+  @Column('timestamp', { nullable: true })
+  rated_at!: Date | null;
+
+  @Column('varchar', { nullable: true, unique: true })
+  rating_token!: string | null;
 }

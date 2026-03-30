@@ -23,6 +23,7 @@ import {
 } from '../dto/service-request-chain.dto';
 import { UpdateServiceRequestDto } from '../dto/update-service-request.dto';
 import { Cursor, CursorData } from '../../../common/utils/cursor';
+import { QrTokenGenerator } from '../../../common/utils/qr-token.generator';
 
 @Injectable()
 export class ServiceRequestService {
@@ -33,6 +34,7 @@ export class ServiceRequestService {
     private readonly sseService: SseService,
     private readonly technicianService: TechnicianService,
     private readonly mailService: MailService,
+    private readonly qrTokenGenerator: QrTokenGenerator,
   ) {}
 
   async update(
@@ -59,6 +61,15 @@ export class ServiceRequestService {
 
     if (dto.status) {
       sr.status = dto.status;
+    }
+
+    // Generate rating token when transitioning to a final status
+    if (
+      (sr.status === ServiceRequestStatus.RESOLVED ||
+        sr.status === ServiceRequestStatus.CLOSED) &&
+      !sr.rating_token
+    ) {
+      sr.rating_token = this.qrTokenGenerator.generateToken();
     }
 
     if (dto.technician_notes !== undefined) {
@@ -519,6 +530,7 @@ export class ServiceRequestService {
       scheduled_date: sr.scheduled_date || undefined,
       parent_id: sr.parent_id || undefined,
       has_followups: hasFollowups,
+      rating_score: sr.rating_score ?? undefined,
     };
   }
 }

@@ -173,6 +173,9 @@ export class ServiceRequestController {
       technician_notes: sr.technician_notes,
       parent_id: sr.parent_id,
       followup_reason: sr.followup_reason,
+      rating_score: sr.rating_score,
+      rating_comment: sr.rating_comment,
+      rated_at: sr.rated_at,
       asset: {
         id: sr.asset.id,
         name: sr.asset.name,

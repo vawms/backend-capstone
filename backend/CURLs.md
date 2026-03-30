@@ -273,6 +273,48 @@ curl http://localhost:3000/v1/public/intake/<qr_token>/status
 }
 ```
 
+## Public: Client Ratings
+
+### Check Rating Eligibility
+
+```bash
+curl http://localhost:3000/v1/public/intake/rate/<rating_token>
+```
+
+#### Response
+
+```json
+{
+  "eligible": true,
+  "already_rated": false
+}
+```
+
+### Submit a Rating
+
+```bash
+curl -X POST http://localhost:3000/v1/public/intake/rate/<rating_token> \
+  -H "Content-Type: application/json" \
+  -d '{
+    "score": 5,
+    "comment": "Great service, very professional!"
+  }'
+```
+
+#### Response
+
+```json
+{
+  "message": "Thank you for your feedback!",
+  "rating_score": 5
+}
+```
+
+#### Error Responses
+
+- `404 Not Found` — Token is invalid or expired
+- `400 Bad Request` — SR is not RESOLVED/CLOSED yet, or already rated
+
 ## Operator: Service Requests
 
 ### List Service Requests (Guarded)

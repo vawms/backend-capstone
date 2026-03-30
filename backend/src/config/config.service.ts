@@ -79,4 +79,8 @@ export class ConfigService {
   get jwtSecret(): string {
     return this.config.JWT_SECRET;
   }
+
+  get appBaseUrl(): string {
+    return this.config.APP_BASE_URL;
+  }
 }

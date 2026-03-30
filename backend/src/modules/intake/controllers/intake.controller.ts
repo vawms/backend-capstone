@@ -14,6 +14,7 @@ import { Request } from 'express';
 import { IntakeService } from '../services/intake.service';
 import { CreateIntakeRequestDto } from '../dto/create-intake-request.dto';
 import { IntakeResponseDto } from '../dto/intake-response.dto';
+import { SubmitRatingDto } from '../dto/submit-rating.dto';
 
 @Controller('v1/public/intake')
 export class IntakeController {
@@ -61,6 +62,29 @@ export class IntakeController {
   getRateLimitStatus(@Param('token') token: string, @Req() request: Request) {
     const ip = this.getClientIp(request);
     return this.intakeService.getRateLimitStatus(token, ip);
+  }
+
+  /**
+   * POST /v1/public/intake/rate/:token
+   * Submit a client rating for a resolved/closed service request
+   */
+  @Post('rate/:token')
+  @HttpCode(HttpStatus.OK)
+  async submitRating(
+    @Param('token') token: string,
+    @Body(ValidationPipe) dto: SubmitRatingDto,
+  ) {
+    return this.intakeService.submitRating(token, dto);
+  }
+
+  /**
+   * GET /v1/public/intake/rate/:token
+   * Check whether the rating token is eligible for submission
+   */
+  @Get('rate/:token')
+  @HttpCode(HttpStatus.OK)
+  async getRatingEligibility(@Param('token') token: string) {
+    return this.intakeService.getRatingEligibility(token);
   }
 
   /**
