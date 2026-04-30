@@ -166,7 +166,7 @@ Note: Public endpoints intentionally return limited fields.
     - Body: `{ followup_reason, description, technician_id?, scheduled_date? }`
     - Only allowed when parent is IN_PROGRESS or RESOLVED
     - Inherits company, asset, client, channel, and type from parent
-    - Auto-assigns ASSIGNED status if a technician is set
+    - Auto-assigns SCHEDULED status if a technician is set
   - `GET /v1/service-requests/:id/chain` (get the full history chain)
     - Walks up to the root and returns all related SRs ordered oldest → newest
     - Response: `{ original_id, total, chain: [...] }`

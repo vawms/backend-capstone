@@ -19,7 +19,7 @@ export class ListServiceRequestsQuery {
   /**
    * Filter by status(es)
    * Can be single: ?status=PENDING
-   * Or multiple: ?status=PENDING&status=ASSIGNED
+   * Or multiple: ?status=PENDING&status=SCHEDULED
    */
   @IsOptional()
   @IsEnum(ServiceRequestStatus, { each: true })

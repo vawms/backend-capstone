@@ -329,7 +329,7 @@ curl "http://localhost:3000/v1/service-requests?status=PENDING" \
   -H "Authorization: Bearer <your_access_token>"
 
 # Filter by multiple statuses
-curl "http://localhost:3000/v1/service-requests?status=PENDING&status=ASSIGNED" \
+curl "http://localhost:3000/v1/service-requests?status=PENDING&status=SCHEDULED" \
   -H "Authorization: Bearer <your_access_token>"
 
 # Date range (inclusive). Use ISO 8601 dates (YYYY-MM-DD).
@@ -472,7 +472,7 @@ curl -X POST http://localhost:3000/v1/service-requests/<serviceRequestId>/follow
   "description": "Follow-up visit: replace compressor belt before failure.",
   "followup_reason": "Compressor belt showing early signs of wear during inspection.",
   "parent_id": "Parent SR ID (UUID)",
-  "status": "ASSIGNED",
+  "status": "SCHEDULED",
   "technician_id": "Technician ID (UUID)",
   "scheduled_date": "2026-04-15T10:00:00.000Z",
   "created_at": "Date (ISO 8601)",
@@ -511,7 +511,7 @@ curl http://localhost:3000/v1/service-requests/<serviceRequestId>/chain \
     },
     {
       "id": "Follow-Up #1 ID (UUID)",
-      "status": "ASSIGNED",
+      "status": "SCHEDULED",
       "description_preview": "Follow-up visit: replace compressor belt...",
       "created_at": "Date (ISO 8601)",
       "followup_reason": "Compressor belt showing early signs of wear.",
@@ -645,21 +645,21 @@ curl -X PATCH http://localhost:3000/v1/service-requests/<serviceRequestId> \
   -H "Authorization: Bearer <your_access_token>" \
   -H "Content-Type: application/json" \
   -d '{
-    "status": "ASSIGNED",
+    "status": "SCHEDULED",
     "technician_id": "Technician ID (UUID)",
     "technician_notes": "Contacted customer. Will visit tomorrow at 10AM.",
     "scheduled_date": "2025-12-25T10:00:00Z"
   }'
 ```
 
-**Valid statuses**: `PENDING`, `ASSIGNED`, `SCHEDULED`, `IN_PROGRESS`, `RESOLVED`, `CLOSED`
+**Valid statuses**: `PENDING`, `SCHEDULED`, `IN_PROGRESS`, `RESOLVED`, `CLOSED`
 
 #### Response
 
 ```json
 {
   "id": "Service Request ID (UUID)",
-  "status": "ASSIGNED",
+  "status": "SCHEDULED",
   "technician_id": "Technician ID (UUID)",
   "technician_notes": "Contacted customer. Will visit tomorrow at 10AM.",
   "scheduled_date": "2025-12-25T10:00:00.000Z",
@@ -710,7 +710,7 @@ curl -X POST http://localhost:3000/v1/service-requests/<serviceRequestId>/techni
 ### Filter Service Requests by Technician (Guarded)
 
 ```bash
-# Get all service requests assigned to a specific technician
+# Get all service requests scheduled to a specific technician
 curl "http://localhost:3000/v1/service-requests?technicianId=<technician_id>" \
   -H "Authorization: Bearer <your_access_token>"
 
@@ -745,7 +745,7 @@ Same format as [List Service Requests](#list-service-requests-with-filters--curs
  {
    "data": {
      "id": "Service Request ID (UUID)",
-     "status": "ASSIGNED",
+     "status": "SCHEDULED",
      "updated_at": "Date (ISO 8601)",
      ...
    }

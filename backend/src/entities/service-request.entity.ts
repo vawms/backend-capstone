@@ -26,7 +26,6 @@ export enum ServiceRequestType {
 
 export enum ServiceRequestStatus {
   PENDING = 'PENDING',
-  ASSIGNED = 'ASSIGNED',
   SCHEDULED = 'SCHEDULED',
   IN_PROGRESS = 'IN_PROGRESS',
   RESOLVED = 'RESOLVED',

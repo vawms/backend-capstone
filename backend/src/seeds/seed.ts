@@ -150,7 +150,7 @@ async function seed() {
       channel: ServiceRequestChannel.QR,
       type: ServiceRequestType.MALFUNCTION,
       description: 'Router frequently dropping connections during peak hours.',
-      status: ServiceRequestStatus.ASSIGNED,
+      status: ServiceRequestStatus.SCHEDULED,
       technician_id: technicians[0].id,
       technician_notes: 'Initial diagnosis suggests overheating.',
       rating_token: qrGenerator.generateToken(),
@@ -187,7 +187,7 @@ async function seed() {
     followup_reason:
       'Compressor belt showing early signs of wear during annual inspection.',
     parent_id: requests[2].id,
-    status: ServiceRequestStatus.ASSIGNED,
+    status: ServiceRequestStatus.SCHEDULED,
     technician_id: technicians[1].id,
   });
   await serviceRequestRepo.save(followUp);

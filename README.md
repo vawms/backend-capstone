@@ -4,7 +4,7 @@
 
 Smart Service is a backend API for managing field service operations. It connects companies with their physical assets (servers, routers, HVAC units, etc.) and streamlines the workflow from service request intake through technician assignment and resolution.
 
-**How it works:** Each asset gets a unique QR code. When someone scans the QR code, they're taken to a public intake form where they can submit a service request describing the issue. Operators see incoming requests in real time via Server-Sent Events, assign technicians, schedule work, and track progress through a defined status lifecycle (Pending → Assigned → Scheduled → In Progress → Resolved → Closed).
+**How it works:** Each asset gets a unique QR code. When someone scans the QR code, they're taken to a public intake form where they can submit a service request describing the issue. Operators see incoming requests in real time via Server-Sent Events, assign technicians, schedule work, and track progress through a defined status lifecycle (Pending → Scheduled → In Progress → Resolved → Closed).
 
 **Key capabilities:**
 - **QR-based intake** — Clients scan an asset's QR code and submit service requests without needing an account

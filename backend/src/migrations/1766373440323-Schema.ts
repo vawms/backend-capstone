@@ -14,7 +14,7 @@ export class Schema1766373440323 implements MigrationInterface {
       `CREATE TYPE "public"."service_requests_type_enum" AS ENUM('MAINTENANCE', 'MALFUNCTION')`,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."service_requests_status_enum" AS ENUM('PENDING', 'ASSIGNED', 'SCHEDULED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED')`,
+      `CREATE TYPE "public"."service_requests_status_enum" AS ENUM('PENDING', 'SCHEDULED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED')`,
     );
     await queryRunner.query(
       `CREATE TABLE "service_requests" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "company_id" uuid NOT NULL, "asset_id" uuid NOT NULL, "client_id" uuid, "channel" "public"."service_requests_channel_enum" NOT NULL, "type" "public"."service_requests_type_enum" NOT NULL, "description" text NOT NULL, "scheduled_date" TIMESTAMP, "technician_notes" text, "client_media" jsonb, "technician_media" jsonb, "status" "public"."service_requests_status_enum" NOT NULL DEFAULT 'PENDING', "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "technician_id" uuid, CONSTRAINT "PK_ee60bcd826b7e130bfbd97daf66" PRIMARY KEY ("id"))`,

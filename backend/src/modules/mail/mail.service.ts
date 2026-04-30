@@ -113,7 +113,7 @@ export class MailService implements OnModuleInit {
         <li><strong>Asset:</strong> ${serviceRequest.asset ? serviceRequest.asset.name : 'N/A'}</li>
         <li><strong>Description:</strong> ${serviceRequest.description}</li>
       </ul>
-      <p>We will update you as soon as a technician is assigned.</p>
+      <p>We will update you as soon as a technician is scheduled.</p>
     `;
 
     await this.sendMail(to, subject, html);

@@ -98,14 +98,14 @@ export class ServiceRequestController {
    * List service requests with filtering and cursor pagination
    *
    * Query params:
-   * - status: PENDING, ASSIGNED, SCHEDULED, IN_PROGRESS, RESOLVED, CLOSED (can repeat)
+   * - status: PENDING, SCHEDULED, IN_PROGRESS, RESOLVED, CLOSED (can repeat)
    * - from: 2025-11-01
    * - to: 2025-11-30
    * - cursor: pagination cursor from previous response
    * - limit: 1-100 (default 20)
    *
    * Example:
-   * GET /v1/service-requests?status=PENDING&status=ASSIGNED&from=2025-11-01&limit=20
+   * GET /v1/service-requests?status=PENDING&status=SCHEDULED&from=2025-11-01&limit=20
    * GET /v1/service-requests?status=PENDING&cursor=<nextCursor>&limit=20
    */
   @Get()

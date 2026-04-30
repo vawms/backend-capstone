@@ -55,7 +55,7 @@ export class ServiceRequestService {
       }
       sr.technician = technician;
       if (sr.status === ServiceRequestStatus.PENDING) {
-        sr.status = ServiceRequestStatus.ASSIGNED;
+        sr.status = ServiceRequestStatus.SCHEDULED;
       }
     }
 
@@ -184,7 +184,7 @@ export class ServiceRequestService {
    * List service requests with filtering and cursor pagination
    *
    * Query params:
-   * - status: filter by status (PENDING, ASSIGNED, etc.)
+   * - status: filter by status (PENDING, SCHEDULED, etc.)
    * - from: filter from date (2025-11-01)
    * - to: filter to date (2025-11-30)
    * - cursor: pagination cursor from previous response
@@ -337,20 +337,6 @@ export class ServiceRequestService {
       );
     }
 
-    // Resolve technician (from DTO, or inherit from parent)
-    let technicianId = dto.technician_id || parent.technician_id;
-    if (dto.technician_id) {
-      const technician = await this.technicianService.findOne(
-        dto.technician_id,
-      );
-      if (!technician) {
-        throw new NotFoundException(
-          `Technician with ID ${dto.technician_id} not found`,
-        );
-      }
-      technicianId = technician.id;
-    }
-
     const followUp = this.serviceRequestRepository.create({
       company_id: parent.company_id,
       asset_id: parent.asset_id,
@@ -360,13 +346,9 @@ export class ServiceRequestService {
       description: dto.description,
       followup_reason: dto.followup_reason,
       parent_id: parent.id,
-      technician_id: technicianId,
-      status: technicianId
-        ? ServiceRequestStatus.ASSIGNED
-        : ServiceRequestStatus.PENDING,
-      scheduled_date: dto.scheduled_date
-        ? new Date(dto.scheduled_date)
-        : null,
+      technician_id: null,
+      status: ServiceRequestStatus.PENDING,
+      scheduled_date: null,
     });
 
     const saved = await this.serviceRequestRepository.save(followUp);
