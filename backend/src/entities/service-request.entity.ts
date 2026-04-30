@@ -107,7 +107,7 @@ export class ServiceRequest {
   client!: Client;
 
   @Column('uuid', { nullable: true })
-  technician_id!: string;
+  technician_id!: string | null;
 
   @ManyToOne(() => Technician, (technician) => technician.service_requests, {
     onDelete: 'SET NULL',
