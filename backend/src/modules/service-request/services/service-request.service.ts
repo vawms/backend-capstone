@@ -195,7 +195,16 @@ export class ServiceRequestService {
   async listServiceRequests(
     query: ListServiceRequestsQuery,
   ): Promise<ListServiceRequestsResponseDto> {
-    const { status, from, to, cursor, limit, technicianId, parentId, rootOnly } = query;
+    const {
+      status,
+      from,
+      to,
+      cursor,
+      limit,
+      technicianId,
+      parentId,
+      rootOnly,
+    } = query;
 
     // FIX: Ensure limit is a number and set a default if missing
     const takeLimit = limit ? Number(limit) : 20;

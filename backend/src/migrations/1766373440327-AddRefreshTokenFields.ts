@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddRefreshTokenFields1766373440327
-  implements MigrationInterface
-{
+export class AddRefreshTokenFields1766373440327 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
       `ALTER TABLE "users" ADD "refresh_token_hash" text`,

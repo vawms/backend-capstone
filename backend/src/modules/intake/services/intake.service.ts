@@ -118,6 +118,33 @@ export class IntakeService {
     return new IntakeResponseDto(saved.id, saved.created_at);
   }
 
+  async addClientMedia(
+    id: string,
+    files: Array<{ url: string; kind: 'image' | 'video' | 'document' }>,
+  ): Promise<ServiceRequest> {
+    const sr = await this.serviceRequestRepository.findOne({
+      where: { id, channel: ServiceRequestChannel.QR },
+    });
+
+    if (!sr) {
+      throw new NotFoundException('Service request not found');
+    }
+
+    const existingMedia = sr.client_media || [];
+    sr.client_media = [...existingMedia, ...files];
+
+    const updatedSr = await this.serviceRequestRepository.save(sr);
+
+    this.eventsGateway.emitServiceRequestUpdate(sr.company_id, {
+      type: 'CLIENT_MEDIA_ADDED',
+      serviceRequestId: sr.id,
+      client_media: files,
+      updatedAt: sr.updated_at,
+    });
+
+    return updatedSr;
+  }
+
   /**
    * Helper: Get full asset entity (not just public DTO)
    * Used internally to get companyId

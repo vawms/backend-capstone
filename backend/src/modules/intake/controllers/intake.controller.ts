@@ -8,8 +8,15 @@ import {
   HttpStatus,
   ValidationPipe,
   Req,
+  UseInterceptors,
+  UploadedFiles,
+  BadRequestException,
+  ParseUUIDPipe,
   // BadRequestException,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { Request } from 'express';
 import { IntakeService } from '../services/intake.service';
 import { CreateIntakeRequestDto } from '../dto/create-intake-request.dto';
@@ -49,6 +56,47 @@ export class IntakeController {
     const ip = this.getClientIp(request);
 
     return this.intakeService.createIntakeRequest(token, ip, dto);
+  }
+
+  /**
+   * POST /v1/public/intake/:id/client-media
+   * Upload image files for a service request created through public intake.
+   */
+  @Post(':id/client-media')
+  @UseInterceptors(
+    FilesInterceptor('files', 10, {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, callback) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          callback(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+        },
+      }),
+      fileFilter: (req, file, callback) => {
+        if (!file.mimetype.startsWith('image/')) {
+          return callback(
+            new BadRequestException('Only image uploads are allowed'),
+            false,
+          );
+        }
+
+        callback(null, true);
+      },
+    }),
+  )
+  @HttpCode(HttpStatus.CREATED)
+  async uploadClientMedia(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @UploadedFiles() files: Array<Express.Multer.File>,
+  ) {
+    const mediaFiles = files.map((file) => ({
+      url: `/uploads/${file.filename}`,
+      kind: 'image' as const,
+    }));
+
+    return this.intakeService.addClientMedia(id, mediaFiles);
   }
 
   /**

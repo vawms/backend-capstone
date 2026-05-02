@@ -34,7 +34,7 @@ export class AuthService {
 
   async validateUser(username: string, pass: string): Promise<User | null> {
     const user = await this.usersRepository.findOne({ where: { username } });
-    if (user && await bcrypt.compare(pass, user.password)) {
+    if (user && (await bcrypt.compare(pass, user.password))) {
       return user;
     }
     return null;
@@ -90,10 +90,7 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token expired or revoked');
     }
 
-    const matches = await bcrypt.compare(
-      refreshToken,
-      user.refresh_token_hash,
-    );
+    const matches = await bcrypt.compare(refreshToken, user.refresh_token_hash);
 
     if (!matches) {
       throw new UnauthorizedException('Refresh token expired or revoked');

@@ -85,7 +85,9 @@ export class MailService implements OnModuleInit {
     }
 
     const subject = `Thank you for your feedback - #${serviceRequest.id}`;
-    const stars = '★'.repeat(serviceRequest.rating_score ?? 0) + '☆'.repeat(5 - (serviceRequest.rating_score ?? 0));
+    const stars =
+      '★'.repeat(serviceRequest.rating_score ?? 0) +
+      '☆'.repeat(5 - (serviceRequest.rating_score ?? 0));
     const html = `
       <h2>Thank You for Your Feedback!</h2>
       <p>We have received your rating for service request <strong>#${serviceRequest.id}</strong>.</p>

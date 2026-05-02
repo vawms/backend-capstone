@@ -60,7 +60,9 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    usersRepository = module.get<MockRepository<User>>(getRepositoryToken(User));
+    usersRepository = module.get<MockRepository<User>>(
+      getRepositoryToken(User),
+    );
     jwtService = module.get(JwtService);
   });
 

@@ -230,7 +230,9 @@ describe('ServiceRequestService', () => {
         client: null,
       } as ServiceRequest;
 
-      jest.spyOn(service, 'getServiceRequestById').mockResolvedValue(resolvedSr);
+      jest
+        .spyOn(service, 'getServiceRequestById')
+        .mockResolvedValue(resolvedSr);
       repository.save!.mockResolvedValue(resolvedSr);
 
       await expect(

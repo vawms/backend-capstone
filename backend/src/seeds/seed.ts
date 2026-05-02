@@ -40,7 +40,8 @@ async function seed() {
   // 2. Create Company
   const company = companyRepo.create({
     name: 'TechCorp',
-    logo_url: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=200&h=200&fit=crop',
+    logo_url:
+      'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=200&h=200&fit=crop',
     primary_color: '#0066CC',
   });
   await companyRepo.save(company);
@@ -107,8 +108,16 @@ async function seed() {
   // 6. Create Technicians & Technician Users
   const techPassword = await bcrypt.hash('tech123', 10);
   const techData = [
-    { name: 'Sarah Martinez', email: 'sarah.m@techcorp.com', phone: '555-0101' },
-    { name: 'James Thompson', email: 'james.t@techcorp.com', phone: '555-0102' },
+    {
+      name: 'Sarah Martinez',
+      email: 'sarah.m@techcorp.com',
+      phone: '555-0101',
+    },
+    {
+      name: 'James Thompson',
+      email: 'james.t@techcorp.com',
+      phone: '555-0102',
+    },
     { name: 'Emily Chen', email: 'emily.c@techcorp.com', phone: '555-0103' },
   ];
 
@@ -191,7 +200,7 @@ async function seed() {
     technician_id: technicians[1].id,
   });
   await serviceRequestRepo.save(followUp);
-  console.log(`✓ Created follow-up service request (parent: ${requests[2].id})`);
+  console.log(`Created follow-up service request (parent: ${requests[2].id})`);
 
   console.log('\n--- ✅ Seeding complete! ---');
   console.log(`Company ID: ${company.id}`);
@@ -203,6 +212,6 @@ async function seed() {
 }
 
 seed().catch((error) => {
-  console.error('❌ Seeding failed:', error);
+  console.error('Seeding failed:', error);
   process.exit(1);
 });
