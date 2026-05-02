@@ -61,6 +61,23 @@ export class AssetController {
 }
 
 /**
+ * Public asset list — no authentication required
+ */
+@Controller('v1/public/assets')
+export class PublicAssetController {
+  constructor(private readonly assetService: AssetService) {}
+
+  /**
+   * GET /v1/public/assets
+   * Returns all assets (used by the /qrs print page)
+   */
+  @Get()
+  async listAssets(): Promise<AssetResponseDto[]> {
+    return this.assetService.listAllAssets();
+  }
+}
+
+/**
  * Public controller (no authentication required)
  */
 @Controller('v1/public/qr')

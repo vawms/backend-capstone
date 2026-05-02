@@ -60,6 +60,18 @@ export class AssetService {
   }
 
   /**
+   * List all assets (public, used by the QR print page)
+   */
+  async listAllAssets(): Promise<AssetResponseDto[]> {
+    const assets = await this.assetRepository.find({
+      relations: ['company'],
+      order: { created_at: 'DESC' },
+    });
+
+    return assets.map((a) => this.mapToResponseDto(a));
+  }
+
+  /**
    * Fetch asset by ID
    */
   async getAssetById(id: string): Promise<AssetResponseDto> {
