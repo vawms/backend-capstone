@@ -36,6 +36,15 @@ export class User {
   @Column({ type: 'uuid', nullable: true })
   technician_id!: string | null;
 
+  @Column({ type: 'text', nullable: true })
+  refresh_token_hash!: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  refresh_token_expires_at!: Date | null;
+
+  @Column({ type: 'integer', default: 1 })
+  session_version!: number;
+
   @CreateDateColumn()
   created_at!: Date;
 

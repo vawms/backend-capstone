@@ -80,6 +80,22 @@ export class ConfigService {
     return this.config.JWT_SECRET;
   }
 
+  get jwtAccessSecret(): string {
+    return this.config.JWT_ACCESS_SECRET || this.config.JWT_SECRET;
+  }
+
+  get jwtRefreshSecret(): string {
+    return this.config.JWT_REFRESH_SECRET || this.config.JWT_SECRET;
+  }
+
+  get jwtAccessExpiresIn(): string {
+    return this.config.JWT_ACCESS_EXPIRES_IN;
+  }
+
+  get jwtRefreshExpiresIn(): string {
+    return this.config.JWT_REFRESH_EXPIRES_IN;
+  }
+
   get appBaseUrl(): string {
     return this.config.APP_BASE_URL;
   }

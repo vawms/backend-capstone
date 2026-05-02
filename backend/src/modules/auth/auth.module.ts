@@ -9,6 +9,7 @@ import { AppConfigModule } from '../../config/config.module';
 import { ConfigService } from '../../config/config.service';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import type { StringValue } from 'ms';
 
 @Module({
   imports: [
@@ -18,8 +19,10 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     JwtModule.registerAsync({
       imports: [AppConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.jwtSecret,
-        signOptions: { expiresIn: '60m' },
+        secret: configService.jwtAccessSecret,
+        signOptions: {
+          expiresIn: configService.jwtAccessExpiresIn as StringValue,
+        },
       }),
       inject: [ConfigService],
     }),

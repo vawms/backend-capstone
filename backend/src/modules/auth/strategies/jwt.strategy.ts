@@ -1,7 +1,7 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable } from '@nestjs/common';
-import { JwtPayload } from '../auth.service';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { AccessTokenPayload } from '../auth.service';
 import { ConfigService } from '../../../config/config.service';
 
 @Injectable()
@@ -10,11 +10,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.jwtSecret,
+      secretOrKey: configService.jwtAccessSecret,
     });
   }
 
-  async validate(payload: JwtPayload) {
+  async validate(payload: AccessTokenPayload) {
+    if (payload.type !== 'access') {
+      throw new UnauthorizedException('Invalid access token');
+    }
+
     // The decoded JWT payload is injected into the request object as `req.user`.
     return {
       userId: payload.sub,

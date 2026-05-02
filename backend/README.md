@@ -32,6 +32,10 @@ The backend validates config at startup and will fail-fast if anything is invali
 | `PORT` | `3000` | API listen port |
 | `NODE_ENV` | `development` | Environment mode |
 | `JWT_SECRET` | `super-secret` | JWT signing secret |
+| `JWT_ACCESS_SECRET` | `JWT_SECRET` | Access-token signing secret |
+| `JWT_REFRESH_SECRET` | `JWT_SECRET` | Refresh-token signing secret |
+| `JWT_ACCESS_EXPIRES_IN` | `15m` | Access-token lifetime |
+| `JWT_REFRESH_EXPIRES_IN` | `7d` | Refresh-token lifetime |
 | `APP_BASE_URL` | `http://localhost:3000` | Base URL used in rating links sent to clients |
 
 Example `.env`:
@@ -48,6 +52,10 @@ DB_USERNAME=postgres
 DB_PASSWORD=postgres
 NODE_ENV=development
 JWT_SECRET=super-secret
+JWT_ACCESS_SECRET=super-secret
+JWT_REFRESH_SECRET=super-secret
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
 ```
 
 ## Install Dependencies
@@ -152,6 +160,12 @@ Note: Public endpoints intentionally return limited fields.
     - Token is generated automatically when an SR transitions to RESOLVED or CLOSED
     - Included in the status-update email sent to the client
     - One-time use: returns 400 if already rated
+
+- **Authentication**
+  - `POST /v1/auth/login` (returns `access_token`, `refresh_token`, `expires_in`)
+  - `POST /v1/auth/refresh` (rotates the refresh token and returns a fresh token pair)
+  - `POST /v1/auth/logout` (revokes the current refresh token)
+  - `GET /v1/auth/profile`
 
 - **Operator: Service Requests**
   - `GET /v1/service-requests?status=&from=&to=&cursor=&limit=&parentId=&rootOnly=`

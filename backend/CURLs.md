@@ -20,7 +20,7 @@ curl http://localhost:3000/health
 
 ### Login
 
-Used to obtain a JWT token for use in other requests.
+Used to obtain an access token and refresh token pair for use in other requests.
 
 ```bash
 curl -X POST http://localhost:3000/v1/auth/login \
@@ -35,7 +35,31 @@ curl -X POST http://localhost:3000/v1/auth/login \
 
 ```json
 {
-  "access_token": "your.long.jwt.token"
+  "access_token": "your.long.jwt.token",
+  "refresh_token": "your.long.refresh.jwt.token",
+  "expires_in": 900
+}
+```
+
+### Refresh Access Token
+
+Use the refresh token to mint a new token pair after the access token expires or after a page reload.
+
+```bash
+curl -X POST http://localhost:3000/v1/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refresh_token": "<your_refresh_token>"
+  }'
+```
+
+#### Response
+
+```json
+{
+  "access_token": "new.access.jwt.token",
+  "refresh_token": "new.refresh.jwt.token",
+  "expires_in": 900
 }
 ```
 
@@ -57,6 +81,23 @@ curl http://localhost:3000/v1/auth/profile \
   "role": "OPERATOR",
   "companyId": "Company ID (UUID)",
   "technicianId": null
+}
+```
+
+### Logout
+
+Revokes the stored refresh token for the current session.
+
+```bash
+curl -X POST http://localhost:3000/v1/auth/logout \
+  -H "Authorization: Bearer <your_access_token>"
+```
+
+#### Response
+
+```json
+{
+  "success": true
 }
 ```
 

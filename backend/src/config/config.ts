@@ -85,6 +85,22 @@ export class ConfigSchema {
 
   @IsOptional()
   @IsString()
+  JWT_ACCESS_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
+  JWT_REFRESH_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
+  JWT_ACCESS_EXPIRES_IN: string = '15m';
+
+  @IsOptional()
+  @IsString()
+  JWT_REFRESH_EXPIRES_IN: string = '7d';
+
+  @IsOptional()
+  @IsString()
   APP_BASE_URL: string = 'http://localhost:3000';
 }
 
