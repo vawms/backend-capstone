@@ -520,6 +520,7 @@ export class ServiceRequestService {
       technician_notes: sr.technician_notes,
       scheduled_date: sr.scheduled_date || undefined,
       parent_id: sr.parent_id || undefined,
+      followup_reason: sr.followup_reason || undefined,
       has_followups: hasFollowups,
       rating_score: sr.rating_score ?? undefined,
     };
