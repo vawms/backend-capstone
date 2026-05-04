@@ -162,8 +162,8 @@ Note: Public endpoints intentionally return limited fields.
     - One-time use: returns 400 if already rated
 
 - **Authentication**
-  - `POST /v1/auth/login` (returns `access_token`, `refresh_token`, `expires_in`)
-  - `POST /v1/auth/refresh` (rotates the refresh token and returns a fresh token pair)
+  - `POST /v1/auth/login` (returns `access_token`, `expires_in`, and sets an HttpOnly refresh-token cookie)
+  - `POST /v1/auth/refresh` (rotates the refresh-token cookie and returns a fresh access token)
   - `POST /v1/auth/logout` (revokes the current refresh token)
   - `GET /v1/auth/profile`
 

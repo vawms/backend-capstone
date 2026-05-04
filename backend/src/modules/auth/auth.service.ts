@@ -23,6 +23,11 @@ export interface RefreshTokenPayload {
   session_version: number;
 }
 
+export interface AccessTokenResponse {
+  access_token: string;
+  expires_in: number;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -117,6 +122,32 @@ export class AuthService {
     return { success: true };
   }
 
+  toAccessTokenResponse(tokens: AuthTokenPairDto): AccessTokenResponse {
+    return {
+      access_token: tokens.access_token,
+      expires_in: tokens.expires_in,
+    };
+  }
+
+  getRefreshTokenMaxAgeMs(): number {
+    const expiresIn = this.configService.jwtRefreshExpiresIn;
+    const match = /^(\d+)([smhd])$/.exec(expiresIn);
+    if (!match) {
+      return 7 * 24 * 60 * 60 * 1000;
+    }
+
+    const value = Number(match[1]);
+    const unit = match[2];
+    const multipliers: Record<string, number> = {
+      s: 1000,
+      m: 60_000,
+      h: 3_600_000,
+      d: 86_400_000,
+    };
+
+    return value * multipliers[unit];
+  }
+
   private async issueTokenPair(user: User): Promise<AuthTokenPairDto> {
     const accessPayload: AccessTokenPayload = {
       sub: user.id,
@@ -172,21 +203,6 @@ export class AuthService {
   }
 
   private getRefreshTokenExpiryDate(): Date {
-    const expiresIn = this.configService.jwtRefreshExpiresIn;
-    const match = /^(\d+)([smhd])$/.exec(expiresIn);
-    if (!match) {
-      return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    }
-
-    const value = Number(match[1]);
-    const unit = match[2];
-    const multipliers: Record<string, number> = {
-      s: 1000,
-      m: 60_000,
-      h: 3_600_000,
-      d: 86_400_000,
-    };
-
-    return new Date(Date.now() + value * multipliers[unit]);
+    return new Date(Date.now() + this.getRefreshTokenMaxAgeMs());
   }
 }

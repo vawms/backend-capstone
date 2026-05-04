@@ -20,10 +20,10 @@ curl http://localhost:3000/health
 
 ### Login
 
-Used to obtain an access token and refresh token pair for use in other requests.
+Used to obtain an access token for API requests. The refresh token is stored in an HttpOnly cookie.
 
 ```bash
-curl -X POST http://localhost:3000/v1/auth/login \
+curl -c cookies.txt -X POST http://localhost:3000/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "operator",
@@ -36,21 +36,16 @@ curl -X POST http://localhost:3000/v1/auth/login \
 ```json
 {
   "access_token": "your.long.jwt.token",
-  "refresh_token": "your.long.refresh.jwt.token",
   "expires_in": 900
 }
 ```
 
 ### Refresh Access Token
 
-Use the refresh token to mint a new token pair after the access token expires or after a page reload.
+Use the refresh-token cookie to mint a new access token after the access token expires or after a page reload. The response rotates the refresh-token cookie.
 
 ```bash
-curl -X POST http://localhost:3000/v1/auth/refresh \
-  -H "Content-Type: application/json" \
-  -d '{
-    "refresh_token": "<your_refresh_token>"
-  }'
+curl -b cookies.txt -c cookies.txt -X POST http://localhost:3000/v1/auth/refresh
 ```
 
 #### Response
@@ -58,7 +53,6 @@ curl -X POST http://localhost:3000/v1/auth/refresh \
 ```json
 {
   "access_token": "new.access.jwt.token",
-  "refresh_token": "new.refresh.jwt.token",
   "expires_in": 900
 }
 ```
@@ -90,6 +84,7 @@ Revokes the stored refresh token for the current session.
 
 ```bash
 curl -X POST http://localhost:3000/v1/auth/logout \
+  -b cookies.txt \
   -H "Authorization: Bearer <your_access_token>"
 ```
 
