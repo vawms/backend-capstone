@@ -285,23 +285,27 @@ export class ServiceRequestService {
 
     // Batch-check which items have follow-ups (single query)
     const itemIds = itemsToReturn.map((sr) => sr.id);
-    const followupCountMap = new Map<string, boolean>();
+    const childIdMap = new Map<string, string>();
     if (itemIds.length > 0) {
-      const followupRows: Array<{ parent_id: string }> =
+      const followupRows: Array<{ id: string; parent_id: string }> =
         await this.serviceRequestRepository
           .createQueryBuilder('child')
-          .select('child.parent_id', 'parent_id')
+          .select('child.id', 'id')
+          .addSelect('child.parent_id', 'parent_id')
           .where('child.parent_id IN (:...ids)', { ids: itemIds })
-          .groupBy('child.parent_id')
+          .orderBy('child.created_at', 'ASC')
+          .addOrderBy('child.id', 'ASC')
           .getRawMany();
       for (const row of followupRows) {
-        followupCountMap.set(row.parent_id, true);
+        if (!childIdMap.has(row.parent_id)) {
+          childIdMap.set(row.parent_id, row.id);
+        }
       }
     }
 
     // Build response DTOs
     const dtos = itemsToReturn.map((sr) =>
-      this.mapToCardDto(sr, followupCountMap.has(sr.id)),
+      this.mapToCardDto(sr, childIdMap.get(sr.id)),
     );
 
     // Calculate next cursor
@@ -486,7 +490,7 @@ export class ServiceRequestService {
    */
   private mapToCardDto(
     sr: ServiceRequest,
-    hasFollowups = false,
+    childId?: string,
   ): ServiceRequestCardDto {
     return {
       id: sr.id,
@@ -520,8 +524,9 @@ export class ServiceRequestService {
       technician_notes: sr.technician_notes,
       scheduled_date: sr.scheduled_date || undefined,
       parent_id: sr.parent_id || undefined,
+      child_id: childId,
       followup_reason: sr.followup_reason || undefined,
-      has_followups: hasFollowups,
+      has_followups: Boolean(childId),
       rating_score: sr.rating_score ?? undefined,
     };
   }
