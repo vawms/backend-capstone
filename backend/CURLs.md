@@ -202,6 +202,32 @@ curl -X POST http://localhost:3000/v1/assets \
 }
 ```
 
+### List All Assets (Public)
+
+```bash
+curl http://localhost:3000/v1/public/assets
+```
+
+#### Response
+
+```json
+[
+  {
+    "id": "Asset ID (UUID)",
+    "company_id": "Company ID (UUID)",
+    "company_name": "Company Name",
+    "name": "Product Name",
+    "model": "Product Model",
+    "serial_number": "Serial Number",
+    "location_address": "Location Address",
+    "location_lat": 37.7749,
+    "location_lng": -122.4194,
+    "qr_token": "QR Token (24 URL-safe chars)",
+    "created_at": "Date (ISO 8601)"
+  }
+]
+```
+
 ### Get Asset by ID (Guarded)
 
 ```bash
