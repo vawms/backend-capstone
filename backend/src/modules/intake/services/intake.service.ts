@@ -12,6 +12,10 @@ import {
   ServiceRequestChannel,
   ServiceRequestStatus,
 } from '../../../entities/service-request.entity';
+import {
+  ServiceRequestHistory,
+  ServiceRequestHistoryEventType,
+} from '../../../entities/service-request-history.entity';
 import { CreateIntakeRequestDto } from '../dto/create-intake-request.dto';
 import { IntakeResponseDto } from '../dto/intake-response.dto';
 import { SubmitRatingDto } from '../dto/submit-rating.dto';
@@ -27,6 +31,8 @@ export class IntakeService {
   constructor(
     @InjectRepository(ServiceRequest)
     private readonly serviceRequestRepository: Repository<ServiceRequest>,
+    @InjectRepository(ServiceRequestHistory)
+    private readonly historyRepository: Repository<ServiceRequestHistory>,
     private readonly assetService: AssetService,
     private readonly clientService: ClientService,
     private readonly rateLimiter: RateLimiter,
@@ -87,6 +93,15 @@ export class IntakeService {
 
     const saved = await this.serviceRequestRepository.save(serviceRequest);
 
+    await this.recordHistory({
+      companyId: saved.company_id,
+      serviceRequestId: saved.id,
+      eventType: ServiceRequestHistoryEventType.CREATED,
+      toStatus: saved.status,
+      summary: 'Service request submitted by client',
+      metadata: { channel: saved.channel },
+    });
+
     this.sseService.emit(saved.company_id, {
       event: 'service_request.created',
       data: {
@@ -135,6 +150,14 @@ export class IntakeService {
 
     const updatedSr = await this.serviceRequestRepository.save(sr);
 
+    await this.recordHistory({
+      companyId: sr.company_id,
+      serviceRequestId: sr.id,
+      eventType: ServiceRequestHistoryEventType.CLIENT_MEDIA_ADDED,
+      summary: `Client added ${files.length} media file(s)`,
+      metadata: { count: files.length, files },
+    });
+
     this.eventsGateway.emitServiceRequestUpdate(sr.company_id, {
       type: 'CLIENT_MEDIA_ADDED',
       serviceRequestId: sr.id,
@@ -154,6 +177,32 @@ export class IntakeService {
     // For now, we'll call the service method directly
     // In production, add a private method to AssetService
     return await this.assetService.getAssetEntityByQrToken(qr_token);
+  }
+
+  private async recordHistory(input: {
+    companyId: string;
+    serviceRequestId: string;
+    eventType: ServiceRequestHistoryEventType;
+    fromStatus?: ServiceRequestStatus | null;
+    toStatus?: ServiceRequestStatus | null;
+    technicianId?: string | null;
+    scheduledDate?: Date | null;
+    summary?: string | null;
+    metadata?: Record<string, unknown> | null;
+  }): Promise<void> {
+    const history = this.historyRepository.create({
+      company_id: input.companyId,
+      service_request_id: input.serviceRequestId,
+      event_type: input.eventType,
+      from_status: input.fromStatus ?? null,
+      to_status: input.toStatus ?? null,
+      technician_id: input.technicianId ?? null,
+      scheduled_date: input.scheduledDate ?? null,
+      summary: input.summary ?? null,
+      metadata: input.metadata ?? null,
+    });
+
+    await this.historyRepository.save(history);
   }
 
   /**

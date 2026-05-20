@@ -6,5 +6,6 @@
 /infra/minio_data
 /backend/.env
 /backend/uploads/
+/backend/reports/
 token.txt
 CLAUDE.md

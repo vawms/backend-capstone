@@ -3,6 +3,12 @@ import * as nodemailer from 'nodemailer';
 import { ConfigService } from '../../config/config.service';
 import { ServiceRequest } from '../../entities/service-request.entity';
 
+interface MailAttachment {
+  filename: string;
+  content: Buffer;
+  contentType: string;
+}
+
 @Injectable()
 export class MailService implements OnModuleInit {
   private transporter!: nodemailer.Transporter;
@@ -174,7 +180,42 @@ export class MailService implements OnModuleInit {
     await this.sendMail(to, subject, html);
   }
 
-  private async sendMail(to: string, subject: string, html: string) {
+  async sendServiceRequestCompletionReport(
+    to: string,
+    serviceRequest: ServiceRequest,
+    pdf: Buffer,
+  ) {
+    if (!this.transporter) {
+      this.logger.warn('Transporter not initialized. Cannot send email.');
+      return;
+    }
+
+    const subject = `Service Request Completion Report - #${serviceRequest.id}`;
+    const ratingLink = serviceRequest.rating_token
+      ? `<p><a href="${this.configService.appBaseUrl}/rate/${serviceRequest.rating_token}">Rate this service</a></p>`
+      : '';
+    const html = `
+      <h2>Service Request Completed</h2>
+      <p>Your service request <strong>#${serviceRequest.id}</strong> has been completed.</p>
+      <p>A PDF completion report is attached with the service summary and timeline.</p>
+      ${ratingLink}
+    `;
+
+    await this.sendMail(to, subject, html, [
+      {
+        filename: `service-request-${serviceRequest.id}-completion-report.pdf`,
+        content: pdf,
+        contentType: 'application/pdf',
+      },
+    ]);
+  }
+
+  private async sendMail(
+    to: string,
+    subject: string,
+    html: string,
+    attachments?: MailAttachment[],
+  ) {
     try {
       const from =
         this.configService.smtpFrom || '"Service Desk" <no-reply@example.com>';
@@ -183,6 +224,7 @@ export class MailService implements OnModuleInit {
         to,
         subject,
         html,
+        attachments,
       });
 
       this.logger.log(`Message sent: ${info.messageId}`);

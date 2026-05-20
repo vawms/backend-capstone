@@ -21,7 +21,9 @@
     "migration:generate": "typeorm-ts-node-commonjs migration:generate src/migrations/Schema -d src/ormconfig.ts",
     "migration:run": "typeorm-ts-node-commonjs migration:run -d src/ormconfig.ts",
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/ormconfig.ts",
-    "seed": "ts-node src/seeds/seed.ts"
+    "seed": "ts-node src/seeds/seed.ts",
+    "reports:preview": "ts-node -r tsconfig-paths/register src/scripts/generate-report-previews.ts",
+    "reports:preview:samples": "ts-node src/scripts/generate-sample-report-previews.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.8",
@@ -42,6 +44,7 @@
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
+    "pdfkit": "^0.18.0",
     "pg": "^8.16.3",
     "pg-query-stream": "^4.10.3",
     "reflect-metadata": "^0.2.2",
@@ -64,6 +67,7 @@
     "@types/nodemailer": "^7.0.4",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
+    "@types/pdfkit": "^0.17.6",
     "@types/supertest": "^6.0.2",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",

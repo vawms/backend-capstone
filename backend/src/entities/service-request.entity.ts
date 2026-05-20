@@ -13,6 +13,7 @@ import { Company } from './company.entity';
 import { Asset } from './asset.entity';
 import { Client } from './client.entity';
 import { Technician } from './technician.entity';
+import { ServiceRequestHistory } from './service-request-history.entity';
 
 export enum ServiceRequestChannel {
   QR = 'QR',
@@ -133,6 +134,9 @@ export class ServiceRequest {
 
   @OneToMany(() => ServiceRequest, (sr) => sr.parent)
   followups!: ServiceRequest[];
+
+  @OneToMany(() => ServiceRequestHistory, (history) => history.service_request)
+  history!: ServiceRequestHistory[];
 
   // ── Client rating ──
 

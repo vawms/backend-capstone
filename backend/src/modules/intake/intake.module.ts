@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServiceRequest } from '../../entities/service-request.entity';
+import { ServiceRequestHistory } from '../../entities/service-request-history.entity';
 import { IntakeService } from './services/intake.service';
 import { IntakeController } from './controllers/intake.controller';
 import { AssetModule } from '../assets/asset.module';
@@ -11,7 +12,7 @@ import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ServiceRequest]),
+    TypeOrmModule.forFeature([ServiceRequest, ServiceRequestHistory]),
     AssetModule,
     ClientModule,
     EventsModule,

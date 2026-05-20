@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,6 +10,10 @@ import {
   ServiceRequest,
   ServiceRequestStatus,
 } from '../../../entities/service-request.entity';
+import {
+  ServiceRequestHistory,
+  ServiceRequestHistoryEventType,
+} from '../../../entities/service-request-history.entity';
 import { EventsGateway } from '../../../events/events.gateway';
 import { SseService } from '../../realtime/sse.service';
 import { TechnicianService } from '../../technicians/services/technician.service';
@@ -24,17 +29,35 @@ import {
 import { UpdateServiceRequestDto } from '../dto/update-service-request.dto';
 import { Cursor, CursorData } from '../../../common/utils/cursor';
 import { QrTokenGenerator } from '../../../common/utils/qr-token.generator';
+import { ServiceRequestReportService } from './service-request-report.service';
+
+interface RecordHistoryInput {
+  companyId: string;
+  serviceRequestId: string;
+  eventType: ServiceRequestHistoryEventType;
+  fromStatus?: ServiceRequestStatus | null;
+  toStatus?: ServiceRequestStatus | null;
+  technicianId?: string | null;
+  scheduledDate?: Date | null;
+  summary?: string | null;
+  metadata?: Record<string, unknown> | null;
+}
 
 @Injectable()
 export class ServiceRequestService {
+  private readonly logger = new Logger(ServiceRequestService.name);
+
   constructor(
     @InjectRepository(ServiceRequest)
     private readonly serviceRequestRepository: Repository<ServiceRequest>,
+    @InjectRepository(ServiceRequestHistory)
+    private readonly historyRepository: Repository<ServiceRequestHistory>,
     private readonly eventsGateway: EventsGateway,
     private readonly sseService: SseService,
     private readonly technicianService: TechnicianService,
     private readonly mailService: MailService,
     private readonly qrTokenGenerator: QrTokenGenerator,
+    private readonly reportService: ServiceRequestReportService,
   ) {}
 
   async update(
@@ -43,6 +66,9 @@ export class ServiceRequestService {
   ): Promise<ServiceRequest> {
     const sr = await this.getServiceRequestById(id);
     const oldScheduledDate = sr.scheduled_date;
+    const oldStatus = sr.status;
+    const oldTechnicianId = sr.technician_id;
+    const oldTechnicianNotes = sr.technician_notes;
 
     if (dto.technician_id) {
       const technician = await this.technicianService.findOne(
@@ -79,8 +105,8 @@ export class ServiceRequestService {
     if (dto.scheduled_date !== undefined) {
       // Reject rescheduling on finalized statuses
       if (
-        sr.status === ServiceRequestStatus.RESOLVED ||
-        sr.status === ServiceRequestStatus.CLOSED
+        oldStatus === ServiceRequestStatus.RESOLVED ||
+        oldStatus === ServiceRequestStatus.CLOSED
       ) {
         throw new BadRequestException(
           'Cannot reschedule a service request that is already resolved or closed',
@@ -94,6 +120,15 @@ export class ServiceRequestService {
     }
 
     const updatedSr = await this.serviceRequestRepository.save(sr);
+
+    await this.recordUpdateHistory(
+      updatedSr,
+      dto,
+      oldStatus,
+      oldTechnicianId,
+      oldScheduledDate,
+      oldTechnicianNotes,
+    );
 
     // Detect rescheduling and emit a specific event
     const wasRescheduled =
@@ -133,6 +168,8 @@ export class ServiceRequestService {
           updatedSr,
         );
       }
+
+      await this.sendCompletionReportIfNeeded(updatedSr, oldStatus);
     }
 
     return updatedSr;
@@ -148,6 +185,14 @@ export class ServiceRequestService {
     sr.client_media = [...existingMedia, ...files];
 
     const updatedSr = await this.serviceRequestRepository.save(sr);
+
+    await this.recordHistory({
+      companyId: sr.company_id,
+      serviceRequestId: sr.id,
+      eventType: ServiceRequestHistoryEventType.CLIENT_MEDIA_ADDED,
+      summary: `Client added ${files.length} media file(s)`,
+      metadata: { count: files.length, files },
+    });
 
     this.eventsGateway.emitServiceRequestUpdate(sr.company_id, {
       type: 'CLIENT_MEDIA_ADDED',
@@ -169,6 +214,14 @@ export class ServiceRequestService {
     sr.technician_media = [...existingMedia, ...files];
 
     const updatedSr = await this.serviceRequestRepository.save(sr);
+
+    await this.recordHistory({
+      companyId: sr.company_id,
+      serviceRequestId: sr.id,
+      eventType: ServiceRequestHistoryEventType.TECHNICIAN_MEDIA_ADDED,
+      summary: `Technician added ${files.length} media file(s)`,
+      metadata: { count: files.length, files },
+    });
 
     this.eventsGateway.emitServiceRequestUpdate(sr.company_id, {
       type: 'TECHNICIAN_MEDIA_ADDED',
@@ -369,6 +422,22 @@ export class ServiceRequestService {
     // Reload with relations for the response and events
     const fullSr = await this.getServiceRequestById(saved.id);
 
+    await this.recordHistory({
+      companyId: fullSr.company_id,
+      serviceRequestId: fullSr.id,
+      eventType: ServiceRequestHistoryEventType.CREATED,
+      toStatus: fullSr.status,
+      summary: 'Follow-up service request created',
+      metadata: { parent_id: parent.id },
+    });
+    await this.recordHistory({
+      companyId: parent.company_id,
+      serviceRequestId: parent.id,
+      eventType: ServiceRequestHistoryEventType.FOLLOW_UP_CREATED,
+      summary: 'Follow-up service request created',
+      metadata: { follow_up_id: fullSr.id },
+    });
+
     // Emit events
     this.eventsGateway.emitServiceRequestUpdate(fullSr.company_id, {
       type: 'FOLLOW_UP_CREATED',
@@ -529,5 +598,128 @@ export class ServiceRequestService {
       has_followups: Boolean(childId),
       rating_score: sr.rating_score ?? undefined,
     };
+  }
+
+  private async recordUpdateHistory(
+    sr: ServiceRequest,
+    dto: UpdateServiceRequestDto,
+    oldStatus: ServiceRequestStatus,
+    oldTechnicianId: string | null,
+    oldScheduledDate: Date | null,
+    oldTechnicianNotes: string | null,
+  ): Promise<void> {
+    if (dto.status && dto.status !== oldStatus) {
+      await this.recordHistory({
+        companyId: sr.company_id,
+        serviceRequestId: sr.id,
+        eventType: ServiceRequestHistoryEventType.STATUS_CHANGED,
+        fromStatus: oldStatus,
+        toStatus: sr.status,
+        summary: `Status changed from ${oldStatus} to ${sr.status}`,
+      });
+    }
+
+    if (dto.technician_id && dto.technician_id !== oldTechnicianId) {
+      await this.recordHistory({
+        companyId: sr.company_id,
+        serviceRequestId: sr.id,
+        eventType: ServiceRequestHistoryEventType.ASSIGNED,
+        technicianId: dto.technician_id,
+        summary: 'Technician assignment updated',
+      });
+    }
+
+    if (
+      dto.scheduled_date !== undefined &&
+      !this.sameDate(oldScheduledDate, sr.scheduled_date)
+    ) {
+      await this.recordHistory({
+        companyId: sr.company_id,
+        serviceRequestId: sr.id,
+        eventType: ServiceRequestHistoryEventType.RESCHEDULED,
+        scheduledDate: sr.scheduled_date,
+        summary: 'Service request schedule updated',
+        metadata: { previous_scheduled_date: oldScheduledDate },
+      });
+    }
+
+    if (
+      dto.technician_notes !== undefined &&
+      dto.technician_notes !== oldTechnicianNotes
+    ) {
+      await this.recordHistory({
+        companyId: sr.company_id,
+        serviceRequestId: sr.id,
+        eventType: ServiceRequestHistoryEventType.TECHNICIAN_NOTES_UPDATED,
+        summary: 'Technician notes updated',
+      });
+    }
+  }
+
+  private async recordHistory(input: RecordHistoryInput): Promise<void> {
+    const history = this.historyRepository.create({
+      company_id: input.companyId,
+      service_request_id: input.serviceRequestId,
+      event_type: input.eventType,
+      from_status: input.fromStatus ?? null,
+      to_status: input.toStatus ?? null,
+      technician_id: input.technicianId ?? null,
+      scheduled_date: input.scheduledDate ?? null,
+      summary: input.summary ?? null,
+      metadata: input.metadata ?? null,
+    });
+
+    await this.historyRepository.save(history);
+  }
+
+  private async sendCompletionReportIfNeeded(
+    sr: ServiceRequest,
+    oldStatus: ServiceRequestStatus,
+  ): Promise<void> {
+    const finalStatuses = [
+      ServiceRequestStatus.RESOLVED,
+      ServiceRequestStatus.CLOSED,
+    ];
+
+    if (
+      finalStatuses.includes(oldStatus) ||
+      !finalStatuses.includes(sr.status)
+    ) {
+      return;
+    }
+
+    try {
+      const pdf = await this.reportService.generateCompletionReport(
+        sr.id,
+        sr.company_id,
+      );
+      await this.mailService.sendServiceRequestCompletionReport(
+        sr.client.email,
+        sr,
+        pdf,
+      );
+      const archivedPath = await this.reportService.archiveCompletionReport(
+        sr,
+        pdf,
+      );
+      this.logger.log(
+        `Archived completion report for service request ${sr.id}: ${archivedPath}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send completion report for service request ${sr.id}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
+  }
+
+  private sameDate(left: Date | null, right: Date | null): boolean {
+    if (!left && !right) {
+      return true;
+    }
+    if (!left || !right) {
+      return false;
+    }
+    return new Date(left).getTime() === new Date(right).getTime();
   }
 }
